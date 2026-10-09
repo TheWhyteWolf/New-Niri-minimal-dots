@@ -117,7 +117,6 @@ That's it. The installer handles:
 | `Mod + V` | Open Vesktop (Discord) |
 | `Mod + E` | Open file manager (Nautilus) |
 | `Mod + Z` | Open Zed editor |
-| `Mod + T` | Power menu (Wlogout) |
 | `Mod + P` | Power menu (Fuzzel-based) |
 | `Print` | Screenshot (Flameshot GUI) |
 
@@ -343,8 +342,6 @@ The following fonts are required (installed by `packages.txt`):
 │   └── qt6ct.conf               # Qt6 theme
 ├── starship/
 │   └── starship.toml            # Shell prompt
-├── swappy/
-│   └── config                   # Screenshot annotation
 ├── tmux/
 │   └── tmux.conf                # Terminal multiplexer
 ├── vlc/
@@ -354,9 +351,6 @@ The following fonts are required (installed by `packages.txt`):
 │   ├── style.css                # Bar styling (Catppuccin Mocha)
 │   ├── modules/                 # Individual module configs
 │   └── scripts/                 # 10 custom scripts
-├── wlogout/
-│   ├── layout                   # Power menu layout
-│   └── style.css                # Power menu styling
 ├── xdg-desktop-portal/
 │   ├── niri-portals.conf        # Niri portal routing
 │   └── portals.conf             # General portal fallback
@@ -484,7 +478,7 @@ fc-match "JetBrainsMono Nerd Font"
 | Prompt | [Starship](https://starship.rs/) |
 | Notifications | [Mako](https://github.com/emersion/mako) |
 | Lock Screen | [gtklock](https://github.com/jovanlanik/gtklock) (via niri-lock) |
-| Power Menu | [Wlogout](https://github.com/nicoplv/wlogout) + Fuzzel custom |
+| Power Menu | Fuzzel custom (`powermenu`) |
 | Clipboard | [Cliphist](https://github.com/sentriz/cliphist) + [wl-clipboard](https://github.com/bugaevc/wl-clipboard) |
 | Screenshot | [Flameshot](https://flameshot.org/) |
 | Wallpaper | [Swaybg](https://github.com/swaywm/swaybg) |

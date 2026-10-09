@@ -17,7 +17,7 @@ dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP
 sh -c 'while ! busctl --user status org.gnome.Mutter.ScreenCast >/dev/null 2>&1; do sleep 0.2; done; pkill -f xdg-desktop-portal-gnome' &
 
 # Wallpaper
-swaybg -i "$HOME/Pictures/wallpapers/forest_dark_winter.jpg" -m fill &
+swaybg -i "$HOME/Pictures/wallpapers/surreal-cherry.jpg" -m fill &
 
 # Notifications
 mako &

@@ -99,5 +99,7 @@ if status is-interactive
         end
     end
 end
+fish_add_path __HOME__/.spicetify
+fish_add_path $HOME/develop/flutter/bin
 set -gx TERM xterm-256color
 set -e GTK_THEME
