@@ -199,6 +199,7 @@ That's it. The installer handles:
 | `notifications.sh` | Notification count display |
 | `mediaplayer.sh` | Media player status (playerctl) |
 | `launch-waybar.sh` | Waybar launcher with warning suppression |
+| `fuzzel-menu.sh` | Shared fuzzel launcher (guards against duplicate instances) |
 
 ---
 
@@ -275,7 +276,8 @@ The following fonts are required (installed by `packages.txt`):
 ├── bottom/
 │   └── bottom.toml              # System monitor
 ├── btop/
-│   └── btop.conf                # System monitor (glassy frost theme)
+│   ├── btop.conf                # System monitor config
+│   └── themes/                  # btop themes (btop, glassy_frost, material-you)
 ├── cava/
 │   ├── config                   # Audio visualizer
 │   ├── shaders/
@@ -284,10 +286,18 @@ The following fonts are required (installed by `packages.txt`):
 │   ├── cursors.conf             # XCURSOR_THEME, XCURSOR_SIZE
 │   └── unset-gtk-theme.conf     # Clears GTK_THEME env
 ├── fastfetch/
-│   └── config.jsonc             # System info display
+│   ├── config.jsonc             # System info display
+│   ├── arch.txt / cat.txt       # ASCII logos
+│   ├── ascii.txt
+│   ├── confignew.jsonc          # Alternate layout
+│   └── logos/
 ├── fish/
 │   ├── config.fish              # Fish shell config
-│   └── conf.d/                  # Theme, keybindings, auto-ls
+│   ├── user.fish                # User-specific functions/paths
+│   ├── fish_variables           # Exported fish variables
+│   ├── completions/
+│   ├── conf.d/                  # Theme, keybindings, auto-ls
+│   └── functions/               # fzf helpers and keybind functions
 ├── flameshot/
 │   └── flameshot.ini            # Screenshot tool
 ├── fuzzel/
@@ -301,7 +311,10 @@ The following fonts are required (installed by `packages.txt`):
 │   └── bookmarks
 ├── gtk-4.0/
 │   ├── settings.ini             # GTK4 settings
-│   └── colors.css
+│   ├── colors.css
+│   ├── gtk.css                  # symlink → Catppuccin theme
+│   ├── gtk-dark.css             # symlink → Catppuccin theme
+│   └── assets/                  # symlink → theme assets
 ├── kitty/
 │   ├── kitty.conf               # Kitty terminal (Glassy Frost theme)
 │   ├── colors.conf
@@ -335,7 +348,8 @@ The following fonts are required (installed by `packages.txt`):
 ├── nvim/                        # LazyVim config
 │   ├── init.lua
 │   ├── lazy-lock.json
-│   └── lua/
+│   ├── lua/
+│   └── .gitignore
 ├── pomoru/
 │   └── config.toml              # Pomodoro timer
 ├── qt6ct/
@@ -343,23 +357,31 @@ The following fonts are required (installed by `packages.txt`):
 ├── starship/
 │   └── starship.toml            # Shell prompt
 ├── tmux/
-│   └── tmux.conf                # Terminal multiplexer
+│   ├── tmux.conf                # Terminal multiplexer
+│   ├── workspace.conf           # Workspace/layout settings
+│   ├── terminal.conf            # Terminal profile overrides
+│   ├── tor.conf                 # Tor session profile
+│   ├── sessions/                # Saved tmux sessions
+│   └── utils/                   # Session launcher helpers
 ├── vlc/
 │   └── vlcrc                    # Media player
+├── wallpapers/
+│   ├── forest_dark_winter.jpg   # Default wallpaper
+│   └── rogue.jpg                # Alternative wallpaper
 ├── waybar/
-│   ├── config.jsonc             # Bar config (11 modules)
+│   ├── config.jsonc             # Bar config
 │   ├── style.css                # Bar styling (Catppuccin Mocha)
 │   ├── modules/                 # Individual module configs
-│   └── scripts/                 # 10 custom scripts
+│   └── scripts/                 # 11 custom scripts
 ├── xdg-desktop-portal/
 │   ├── niri-portals.conf        # Niri portal routing
 │   └── portals.conf             # General portal fallback
 ├── zed/
 │   ├── settings.json            # Zed editor
-│   └── snippets/                # Code snippets
-├── wallpapers/
-│   ├── forest_dark_winter.jpg   # Default wallpaper
-│   └── rogue.jpg                # Alternative wallpaper
+│   ├── snippets/                # Code snippets
+│   └── themes/                  # Custom themes
+├── gtkrc                        # GTK2 hint
+├── gtkrc-2.0                    # GTK2 config
 ├── mimeapps.list                # MIME associations
 ├── packages.txt                 # Package list (~150 packages)
 ├── install.sh                   # Automated installer
