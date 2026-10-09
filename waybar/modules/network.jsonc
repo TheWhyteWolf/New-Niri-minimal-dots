@@ -1,16 +1,19 @@
 {
   // ───────── Network ─────────
+  // Reference: "󰈀 wired" — ethernet glyph + the word "wired".
+  // Wifi / offline states keep the same icon+word shape so the panel stays stable.
   "network": {
-    "format-wifi": "󰤨 {signalStrength}%",
-    "format-ethernet": "{bandwidthDownBytes}",
+    "interval": 5,
+    "format-wifi": "󰤨 wifi",
+    "format-ethernet": "󰈀 wired",
+    "format-linked": "󰈀 {ifname}",
     "format-disconnected": "󰤭 offline",
-    "format-linked": "󰈀 {ifname} (No IP)",
+    "format-disabled": "󰤭 off",
     "tooltip-format": "{ifname}\n{ipaddr}/{cidr}\n{essid}\nSignal: {signalStrength}%\nFrequency: {frequency}MHz",
     "tooltip-format-wifi": "{essid} ({signalStrength}%)\n󰈀 {ifname}\n󰩟 {ipaddr}/{cidr}\n󰞒 {bandwidthUpBytes}  {bandwidthDownBytes}\n󰖡 {frequency}MHz",
     "tooltip-format-ethernet": "󰈀 {ifname}\n󰩟 {ipaddr}/{cidr}\n󰞒 {bandwidthUpBytes}  {bandwidthDownBytes}",
     "tooltip-format-disconnected": "Disconnected",
-    "on-click": "__HOME__/.config/waybar/scripts/network-control.sh",
-    "on-click-right": "nm-connection-editor",
-    "interval": 5
+    "on-click": "~/.config/waybar/scripts/network-control.sh",
+    "on-click-right": "nm-connection-editor"
   }
 }

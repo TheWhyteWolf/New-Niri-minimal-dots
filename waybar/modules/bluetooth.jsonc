@@ -1,14 +1,15 @@
 {
   // ───────── Bluetooth ─────────
+  // Reference: a single bluetooth glyph, no trailing word.
   "bluetooth": {
-    "format": "󰂯 {status}",
+    "format": "󰂯",
     "format-disabled": "󰂲",
     "format-off": "󰂲",
     "format-on": "󰂯",
-    "format-connected": "󰂯 {num_connections}",
-    "tooltip-format": "{controller_alias}\t{controller_address}",
-    "tooltip-format-connected": "{controller_alias}\t{controller_address}\n\n{device_enumerate}",
-    "tooltip-format-enumerate-connected": "󰂯 {device_alias}\t{device_battery_percentage}%",
+    "format-connected": "󰂯",
+    "format-no-controller": "󰂲",
+    "tooltip": true,
+    "tooltip-format": "{controller_alias}  {controller_address}",
     "on-click": "~/.config/waybar/scripts/bluetooth-control.sh",
     "on-click-right": "rfkill toggle bluetooth"
   }

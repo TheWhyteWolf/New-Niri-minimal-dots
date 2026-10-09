@@ -2,12 +2,14 @@
 
 # Bluetooth device picker and manager using bluetoothctl and fuzzel
 
+FUZZEL="$HOME/.config/waybar/scripts/fuzzel-menu.sh"
+
 # Check if bluetooth is on
 POWER_STATE=$(bluetoothctl show | grep "Powered: yes")
 
 if [ -z "$POWER_STATE" ]; then
     # Bluetooth is off, ask to turn on
-    CHOICE=$(echo -e "Yes\nNo" | fuzzel --dmenu --prompt="Bluetooth is OFF. Turn ON? " --lines 2 --width 30)
+    CHOICE=$(echo -e "Yes\nNo" | "$FUZZEL" --dmenu --prompt="Bluetooth is OFF. Turn ON? " --lines 2 --width 30)
     if [ "$CHOICE" == "Yes" ]; then
         bluetoothctl power on
         sleep 1 # Wait for power up
@@ -42,7 +44,7 @@ DEVICE_LIST=$(bluetoothctl devices | sed 's/^Device //')
 OPT_SCAN="󰂰 Scan for new devices"
 FULL_LIST="$OPT_SCAN\n$DEVICE_LIST"
 
-SELECTED=$(echo -e "$FULL_LIST" | fuzzel --dmenu --prompt="Bluetooth Devices: " --width 50)
+SELECTED=$(echo -e "$FULL_LIST" | "$FUZZEL" --dmenu --prompt="Bluetooth Devices: " --width 50)
 
 if [ -z "$SELECTED" ]; then
     exit 0
@@ -65,7 +67,7 @@ DEV_NAME=$(echo "$SELECTED" | cut -d ' ' -f 2-)
 
 # Actions menu
 ACTIONS="Connect\nPair\nDisconnect\nTrust\nUntrust\nRemove"
-ACTION=$(echo -e "$ACTIONS" | fuzzel --dmenu --prompt="$DEV_NAME Action: " --lines 6 --width 30)
+ACTION=$(echo -e "$ACTIONS" | "$FUZZEL" --dmenu --prompt="$DEV_NAME Action: " --lines 6 --width 30)
 
 if [ -z "$ACTION" ]; then
     exit 0

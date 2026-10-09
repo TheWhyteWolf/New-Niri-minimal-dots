@@ -1,11 +1,11 @@
 /* ═══════════════════════════════════════════════════════════════════
- * Waybar — Catppuccin Mocha · Island Pills · Blur Ready
+ * Waybar — Frosted Glass · Neon Accents · Modern
  * ═══════════════════════════════════════════════════════════════════ */
 
 * {
     border: none;
     border-radius: 0;
-    font-family: "FiraCode Nerd Font Mono", "Symbols Nerd Font";
+    font-family: "FiraCode Nerd Font Mono", "Symbols Nerd Font", "sans-serif";
     font-size: 11px;
     font-weight: 500;
     min-height: 0;
@@ -16,31 +16,74 @@
 
 window#waybar {
     background: transparent;
-    color: #cdd6f4;
-    opacity: 0.99;
+    color: #000000;
 }
 
+tooltip {
+    background: rgba(17, 17, 27, 0.92);
+    border: 1px solid rgba(180, 190, 254, 0.12);
+    border-radius: 10px;
+    color: #000000;
+    padding: 6px;
+}
+tooltip label {
+    color: #09e89d;
+    padding: 2px 6px;
+}
+
+/* ═══ LEFT / CENTER / RIGHT ═══ */
 .modules-left,
 .modules-center,
 .modules-right {
     background: transparent;
-    padding: 0;
+    padding: 2px 0;
     margin: 0;
 }
 
-tooltip {
-    background: rgba(30, 30, 46, 0.91);
-    border: 1px solid rgba(180, 190, 254, 0.2);
-    border-radius: 14px;
-    color: #cdd6f4;
-}
-tooltip label {
-    color: #cdd6f4;
-    padding: 2px 4px;
+/* ═══════════════════════════════════════════════════════════════════
+ * WORKSPACES — minimal dot/pill style
+ * ═══════════════════════════════════════════════════════════════════ */
+#workspaces {
+    padding: 0 2px;
+    margin: 0 2px;
 }
 
-/* ── BASE PILL — tight and slim ── */
-#workspaces,
+#workspaces button {
+    color: #94e2d5; /* Keep as it is */
+    background: rgba(0, 0, 0, 1); /* Worskspace buttons */
+    border-radius: 10px;
+    padding: 2px 6px;
+    margin: 1px 1px;
+    min-width: 14px;
+    border: 1px solid rgba(69, 71, 90, 0);
+    font-size: 11px;
+    font-weight: 700;
+    transition: all 0.2s ease;
+}
+
+#workspaces button:hover {
+    color: #cba6f7;
+    border-radius: 10px;
+    background: rgba(69, 71, 90, 1);
+}
+
+#workspaces button.active {
+    color: #1e1e2e;
+    background: rgba(180, 190, 254, 0.9);
+    border-radius: 10px;
+    font-weight: 800;
+}
+
+#workspaces button.urgent {
+    color: #1e1e2e;
+    background: rgba(243, 139, 168, 0.9);
+    border-radius: 7px;
+    font-weight: 800;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+ * PILL BASE — shared glassmorphism style
+ * ═══════════════════════════════════════════════════════════════════ */
 #clock,
 #custom-player,
 #pulseaudio,
@@ -49,175 +92,160 @@ tooltip label {
 #custom-clipboard,
 #custom-notifications,
 #cpu,
-#custom-power,
-#memory {
-    background: rgba(30, 32, 60, 0.67);
-    color: #cdd6f4;
+#memory,
+#battery,
+#custom-power {
+    padding: 2px 8px;
+    margin: 1px 1px;
     border-radius: 10px;
-    border: 2px solid rgba(69, 71, 90, 0);
-    padding: 2px 7px;
-    margin: 2px 1.5px;
-    transition:
-        background 0.2s ease,
-        border-color 0.2s ease;
+    background: #000000;
+    border: 1px solid rgba(69, 71, 90, 0.3);
+    color: #bac2de;
+    transition: all 0.2s ease;
 }
 
-/* ── WORKSPACES ── */
-#workspaces {
-    padding: 2px 0px;
-}
+/* ═══════════════════════════════════════════════════════════════════
+ * INDIVIDUAL MODULE STYLES
+ * ═══════════════════════════════════════════════════════════════════ */
 
-#workspaces button {
-    color: #cdd6f4;
-    background: transparent;
-    border-radius: 8px;
-    padding: 1px 3px;
-    margin: 0px 0px;
-    min-width: 18px;
-    border: none;
-    font-size: 11px;
-    transition: all 0.2s cubic-bezier(0.55, -0.68, 0.48, 1.682);
-}
-
-#workspaces button:hover {
-    color: #cdd6f4; /*todo*/
-    background: rgba(69, 71, 90, 0.55);
-    border-radius: 14px;
-}
-
-#workspaces button.active {
-    color: #181825;
-    background: rgba(203, 166, 247, 0.88);
-    border-radius: 8px;
-    padding: 1px 3px;
-    font-weight: 700;
-}
-
-#workspaces button.urgent {
-    color: #f38ba8;
-    background: rgba(243, 139, 168, 0.18);
-    border-radius: 8px;
-}
-
-/* ── CLOCK ── */
+/* ── Clock ── */
 #clock {
-    color: #b5c0b3;
+    color: #94e2d5;
     font-weight: 600;
+    font-size: 11px;
     letter-spacing: 0.3px;
+    padding: 2px 10px;
 }
 
-/* ── PLAYER — truncate so it never breaks layout ── */
+/* ── Player ── */
 #custom-player {
-    color: #b5c0b3;
+    color: #94e2d5;
     font-size: 10px;
-}
-
-/* ── AUDIO ── */
-#pulseaudio {
-    color: #b5c0b3;
-}
-
-#pulseaudio.muted {
-    color: #f38ba8;
-    background: rgba(243, 139, 168, 0.14);
-    border-color: rgba(243, 139, 168, 0.28);
+    padding: 2px 10px;
 }
 
 /* ── CPU ── */
 #cpu {
-    color: #b5c0b3;
+    color: #94e2d5;
 }
-
 #cpu.warning {
     color: #fab387;
-    background: rgba(250, 179, 135, 0.14);
 }
 #cpu.critical {
     color: #f38ba8;
-    background: rgba(243, 139, 168, 0.14);
-    border-color: rgba(243, 139, 168, 0.3);
 }
 
-/* ── MEMORY ── */
+/* ── Memory ── */
 #memory {
-    color: #b5c0b3;
+    color: #94e2d5;
 }
-
+#memory.warning {
+    color: #fab387;
+}
 #memory.critical {
     color: #f38ba8;
-    background: rgba(243, 139, 168, 0.14);
-    border-color: rgba(243, 139, 168, 0.3);
 }
 
-/* ── NETWORK ── */
+/* ── Battery ── */
+#battery {
+    color: #94e2d5;
+}
+#battery.warning {
+    color: #fab387;
+}
+#battery.critical {
+    color: #f38ba8;
+}
+#battery.charging {
+    color: #a6e3a1;
+}
+
+/* ── Audio ── */
+#pulseaudio {
+    color: #94e2d5;
+}
+#pulseaudio.muted {
+    color: #f38ba8;
+}
+
+/* ── Network ── */
 #network {
-    color: #b5c0b3;
+    color: #94e2d5;
 }
-
 #network.disconnected,
 #network.disabled {
     color: #f38ba8;
-    background: rgba(243, 139, 168, 0.1);
 }
 
-/* ── BLUETOOTH ── */
+/* ── Bluetooth ── */
 #bluetooth {
-    color: #b5c0b9;
+    color: #94e2d5;
 }
 #bluetooth.connected {
-    color: #b5c0b3;
+    color: #94e2d5;
 }
-#bluetooth.off {
-    color: #585b70;
-    background: rgba(30, 30, 46, 0.45);
+#bluetooth.off,
+#bluetooth.disconnected {
+    color: #45475a;
 }
 
-/* ── CLIPBOARD ── */
+/* ── Clipboard ── */
 #custom-clipboard {
-    color: #b5c0b3;
+    color: #94e2d5;
 }
 
-/* ── NOTIFICATIONS ── */
+/* ── Notifications ── */
 #custom-notifications {
-    color: #b5c0b3;
+    color: #94e2d5;
     min-width: 24px;
 }
-
 #custom-notifications.dnd-none,
 #custom-notifications.dnd-notification,
 #custom-notifications.dnd-inhibited-none,
 #custom-notifications.dnd-inhibited-notification {
     color: #f38ba8;
-    background: rgba(243, 139, 168, 0.12);
-    border-color: rgba(243, 139, 168, 0.28);
 }
 
-/* ── POWER — explicitly sized so it always shows background ── */
+/* ── Power ── */
 #custom-power {
-    color: #ef757b;
-    /*background: rgba(243, 139, 168, 0.14);*/
-    /*border-radius: 20px;*/
-    /*border: 1px solid rgba(243, 139, 168, 0.35);*/
-    /*padding: 2px 12px;*/
-    /*margin: 2px 2px;*/
-    min-width: 30px;
-    transition:
-        background 0.2s ease,
-        border-color 0.2s ease;
+    min-width: 26px;
+    padding: 2px 8px;
+    color: #f38ba8;
 }
 
-/* ── HOVER ── */
-#cpu:hover,
-#memory:hover,
-#clock:hover,
-#network:hover,
-#bluetooth:hover,
-#pulseaudio:hover,
-#custom-player:hover,
-#custom-clipboard:hover,
-#custom-power:hover,
+/* ═══════════════════════════════════════════════════════════════════
+ * HOVER — each module gets its own accent glow
+ * ═══════════════════════════════════════════════════════════════════ */
+#cpu:hover {
+    color: #cba6f7;
+}
+#memory:hover {
+    color: #cba6f7;
+}
+#battery:hover {
+    color: #cba6f7;
+}
+#pulseaudio:hover {
+    color: #cba6f7;
+}
+#network:hover {
+    color: #cba6f7;
+}
+#bluetooth:hover {
+    color: #cba6f7;
+}
+#custom-clipboard:hover {
+    color: #cba6f7;
+}
 #custom-notifications:hover {
-    /*background: rgba(49, 50, 68, 0.88);*/
-    /*border-color: rgba(180, 190, 254, 0.28);*/
-    color: #cdd6f4;
+    color: #cba6f7;
+}
+#custom-power:hover {
+    color: #ff0000;
+}
+#clock:hover {
+    color: #cba6f7;
+}
+#custom-player:hover {
+    color: #cba6f7;
 }

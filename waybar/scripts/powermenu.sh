@@ -1,11 +1,12 @@
 #!/bin/bash
-# Power menu using fuzzel
 
-set -euo pipefail
+# Power menu script using fuzzel
+
+FUZZEL="$HOME/.config/waybar/scripts/fuzzel-menu.sh"
 
 OPTIONS="⏻ Shutdown\n⏾ Reboot\n󰒲 Suspend\n󰍃 Logout\n󰷛 Lock"
 
-CHOICE=$(echo -e "$OPTIONS" | fuzzel --dmenu --prompt="Power Menu: " --width=20)
+CHOICE=$(echo -e "$OPTIONS" | "$FUZZEL" --dmenu --prompt="Power Menu: " --width=20)
 
 case "$CHOICE" in
     *"Shutdown")
@@ -21,6 +22,6 @@ case "$CHOICE" in
         niri msg action quit
         ;;
     *"Lock")
-        gtklock --config "$HOME/.config/niri-lock/config.ini"
+        niri-lock
         ;;
 esac

@@ -1,0 +1,10 @@
+{
+  // ───────── Recording indicator ─────────
+  // Reference: small red dot in the right panel. Bright red while wf-recorder
+  // (or a similar capture tool) is running, dim when idle.
+  "custom/recording": {
+    "format": "<span foreground='#e0716e'>󰑊</span>",
+    "tooltip": true,
+    "on-click": "~/.config/waybar/scripts/recording.sh"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  // ───────── Night light ─────────
+  // Reference: small cream/amber glyph in the right panel.
+  // Shows its format when night light is OFF and .off class when ON, so the
+  // glyph turns dim/red while gammastep is running. Toggle with a click.
+  //
+  // Uses the pkill guard because a `custom` module without `exec` renders the
+  // format string statically and only re-runs on an update.
+  "custom/nightlight": {
+    "format": "<span foreground='#e8d9a0'>󰃠</span>",
+    "tooltip": true,
+    "on-click": "~/.config/waybar/scripts/nightlight.sh"
+  }
+}

@@ -21,6 +21,7 @@
     "~/.config/waybar/modules/power.jsonc",
     "~/.config/waybar/modules/cpu.jsonc",
     "~/.config/waybar/modules/memory.jsonc",
+    "~/.config/waybar/modules/battery.jsonc",
   ],
 
   "modules-left": [
@@ -32,6 +33,7 @@
   "modules-right": [
     "cpu",
     "memory",
+    "battery",
     "pulseaudio",
     "network",
     "bluetooth",

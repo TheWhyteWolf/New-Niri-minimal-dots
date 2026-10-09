@@ -66,8 +66,9 @@ def main():
 
     input_str = "\n".join(menu_lines)
     
+    fuzzel = os.path.expanduser("~/.config/waybar/scripts/fuzzel-menu.sh")
     try:
-        p = subprocess.Popen(["fuzzel", "-d", "-l", "20", "-w", "50", "-p", "Notifications: "], 
+        p = subprocess.Popen([fuzzel, "-d", "-l", "20", "-w", "50", "-p", "Notifications: "], 
                              stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         selected, _ = p.communicate(input=input_str)
         selected = selected.strip()

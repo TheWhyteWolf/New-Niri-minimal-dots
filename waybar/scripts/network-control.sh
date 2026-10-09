@@ -2,6 +2,8 @@
 
 # Network control script using nmcli and fuzzel
 
+FUZZEL="$HOME/.config/waybar/scripts/fuzzel-menu.sh"
+
 # Notify user
 notify_status() {
     notify-send "Network Manager" "$1"
@@ -58,7 +60,7 @@ main_menu() {
 
     MENU="$OPT_TOGGLE\n$OPT_SCAN\n$OPT_SAVED\n$OPT_EDITOR\n$OPT_NMTUI"
 
-    CHOICE=$(echo -e "$MENU" | fuzzel --dmenu --prompt="Network ($STATUS_MSG): " --width 40)
+    CHOICE=$(echo -e "$MENU" | "$FUZZEL" --dmenu --prompt="Network ($STATUS_MSG): " --width 40)
 
     if [ -z "$CHOICE" ]; then
         exit 0
@@ -98,7 +100,7 @@ scan_menu() {
     OPT_BACK="󰌍 Back"
     MENU="$OPT_BACK\n$NETWORKS"
     
-    SEL_NET=$(echo -e "$MENU" | fuzzel --dmenu --prompt="Select Network: " --width 50)
+    SEL_NET=$(echo -e "$MENU" | "$FUZZEL" --dmenu --prompt="Select Network: " --width 50)
     
     if [ -z "$SEL_NET" ]; then
         exit 0
@@ -129,7 +131,7 @@ scan_menu() {
                 nmcli dev wifi connect "$SSID"
         else
                 # Needs password
-                PASS=$(echo "" | fuzzel --dmenu --prompt="Password for $SSID: " --password --width 40)
+                PASS=$(echo "" | "$FUZZEL" --dmenu --prompt="Password for $SSID: " --password --width 40)
                 if [ -n "$PASS" ]; then
                 notify_status "Connecting to $SSID..."
                 if nmcli dev wifi connect "$SSID" password "$PASS"; then
@@ -149,7 +151,7 @@ saved_menu() {
     OPT_BACK="󰌍 Back"
     MENU="$OPT_BACK\n$SAVED"
     
-    SEL_SAVED=$(echo -e "$MENU" | fuzzel --dmenu --prompt="Saved Networks: " --width 40)
+    SEL_SAVED=$(echo -e "$MENU" | "$FUZZEL" --dmenu --prompt="Saved Networks: " --width 40)
     
     if [ -z "$SEL_SAVED" ]; then
         exit 0

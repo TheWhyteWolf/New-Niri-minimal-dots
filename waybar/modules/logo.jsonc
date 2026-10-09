@@ -1,0 +1,10 @@
+{
+  // ───────── Arch logo ─────────
+  // Reference: small Arch Linux glyph at the far left, immediately left of
+  // the workspace numbers. Pango markup tints it to the bar's muted cyan.
+  "custom/logo": {
+    "format": "<span foreground='#9fb4c0'>󰣇</span>",
+    "tooltip": false,
+    "on-click": "~/.config/waybar/scripts/powermenu.sh"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  // ───────── Display ─────────
+  // Reference: a small monitor/output glyph sitting just before the power
+  // button. Rendered statically so the panel keeps its exact width.
+  "custom/display": {
+    "format": "<span foreground='#c6ccd2'>󰶐</span>",
+    "tooltip": true,
+    "tooltip-format": "Display output",
+    "on-click": "~/.config/waybar/scripts/display.sh"
+    ,
+  // Second glyph: the window/session mark. Kept as one module so the
+  // reference's "monitor icon + power button" tail stays intact.
+  },
+  "custom/session": {
+    "format": "<span foreground='#c6ccd2'>󰒃</span>",
+    "tooltip": true,
+    "tooltip-format": "Session",
+    "on-click": "",
+    "on-click": ""
+  }
+}

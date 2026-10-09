@@ -1,29 +1,17 @@
 {
   // ───────── Media Player ─────────
+  // Reference: "Anuv Jain - Alag Aasmaan" — plain "artist - title", no play icon,
+  // no quoting around the title. Keeps the center panel compact.
   "custom/player": {
     "exec": "~/.config/waybar/scripts/mediaplayer.sh",
     "return-type": "json",
     "interval": 2,
-    "max-length": 50,
+    "max-length": 52,
+    "escape": true,
+    "tooltip": true,
     "on-click": "playerctl play-pause",
     "on-click-right": "playerctl next",
     "on-scroll-up": "playerctl previous",
     "on-scroll-down": "playerctl next"
-  },
-  
-  "mpris": {
-    "format": "{player_icon} {dynamic}",
-    "format-paused": "{status_icon} <i>{dynamic}</i>",
-    "player-icons": {
-      "default": "⏸",
-      "mpv": "🎵",
-      "spotify": ""
-    },
-    "status-icons": {
-      "paused": "▶"
-    },
-    "dynamic-order": ["artist", "title"],
-    "dynamic-len": 40,
-    "ignored-players": []
   }
 }
