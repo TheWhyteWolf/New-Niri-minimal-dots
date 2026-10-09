@@ -2,8 +2,9 @@
   // ───────── Power ─────────
   "custom/power": {
     "format": "󰐥",
-    "tooltip": "Power Menu",
+    "tooltip": true,
+    "tooltip-format": "Power Options",
     "on-click": "~/.config/waybar/scripts/powermenu.sh",
-    "on-click-right": "niri msg action quit"
-  }
+    "on-click-right": "niri msg action quit",
+  },
 }

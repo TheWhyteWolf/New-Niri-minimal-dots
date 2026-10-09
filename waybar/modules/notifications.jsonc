@@ -1,7 +1,8 @@
 {
   // ───────── Notifications ─────────
   "custom/notifications": {
-    "tooltip": false,
+    "tooltip": true,
+    "tooltip-format": "Check all Notifications",
     "format": "{icon}",
     "format-icons": {
       "notification": "󱅫",
@@ -11,7 +12,7 @@
       "inhibited-notification": "󱅫",
       "inhibited-none": "󰂚",
       "dnd-inhibited-notification": "󰂛",
-      "dnd-inhibited-none": "󰂛"
+      "dnd-inhibited-none": "󰂛",
     },
     "return-type": "json",
     "exec-if": "which makoctl",
@@ -19,6 +20,6 @@
     "interval": "once",
     "on-click": "~/.config/waybar/scripts/notification-control.sh",
     "on-click-right": "makoctl dismiss -a",
-    "escape": true
-  }
+    "escape": true,
+  },
 }

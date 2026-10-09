@@ -2,7 +2,8 @@
   // ───────── Clipboard ─────────
   "custom/clipboard": {
     "format": "Copy",
-    "tooltip": "Clipboard History",
+    "tooltip": true,
+    "tooltip-format": "Clipboard History",
     "on-click": "~/.config/waybar/scripts/clipboard.sh --show",
     "on-click-right": "~/.config/waybar/scripts/clipboard.sh --clear",
   },
