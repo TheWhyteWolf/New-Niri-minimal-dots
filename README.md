@@ -28,7 +28,7 @@
 
 | Neovim | Power Menu | Wallpaper Picker |
 |--------|------------|------------------|
-| ![Neovim](Screenshots/neovim.png) | ![Power Menu](Screenshots/powermenu.png) | ![Wallpaper Picker (Fuzz-Wall)](Screenshots/wallpaperpicker.png) |
+| ![Neovim](Screenshots/neovim.png) | ![Power Menu](Screenshots/powermenu.png) | ![Fuzz-Wall](Screenshots/wallpaperpicker.png) |
 
 | btop | Cava |
 |------|------|
