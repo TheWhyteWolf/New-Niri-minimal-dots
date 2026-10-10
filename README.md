@@ -26,7 +26,7 @@
 |----------|------------|-----|
 | ![Launcher](Screenshots/launcher.png) | ![Workspaces](Screenshots/workspaces.png) | ![Zed](Screenshots/zed.png) |
 
-| Neovim | Power Menu | Wallpaper Picker(Fuzz-Wall) |
+| Neovim | Power Menu | Wallpaper Picker (Fuzz-Wall) |
 |--------|------------|------------------|
 | ![Neovim](Screenshots/neovim.png) | ![Power Menu](Screenshots/powermenu.png) | ![Wallpapers](Screenshots/wallpaperpicker.png) |
 
