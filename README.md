@@ -26,9 +26,9 @@
 |----------|------------|-----|
 | ![Launcher](Screenshots/launcher.png) | ![Workspaces](Screenshots/workspaces.png) | ![Zed](Screenshots/zed.png) |
 
-| Neovim | Power Menu | Wallpaper Picker |
+| Neovim | Power Menu | Wallpaper Picker(Fuzz-Wall) |
 |--------|------------|------------------|
-| ![Neovim](Screenshots/neovim.png) | ![Power Menu](Screenshots/powermenu.png) | ![Fuzz-Wall](Screenshots/wallpaperpicker.png) |
+| ![Neovim](Screenshots/neovim.png) | ![Power Menu](Screenshots/powermenu.png) | ![Wallpapers](Screenshots/wallpaperpicker.png) |
 
 | btop | Cava |
 |------|------|
