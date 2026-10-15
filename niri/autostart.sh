@@ -16,8 +16,15 @@ dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP
 
 sh -c 'while ! busctl --user status org.gnome.Mutter.ScreenCast >/dev/null 2>&1; do sleep 0.2; done; pkill -f xdg-desktop-portal-gnome' &
 
-# Wallpaper
-swaybg -i "$HOME/Pictures/wallpapers/surreal-cherry.jpg" -m fill &
+# Wallpaper: choose a different image at random each session.
+wallpaper_dir="$HOME/Pictures/wallpapers"
+wallpaper=$(find "$wallpaper_dir" -maxdepth 1 -type f \
+  \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) \
+  -print 2>/dev/null | shuf -n 1)
+
+if [ -n "$wallpaper" ]; then
+  swaybg -i "$wallpaper" -m fill &
+fi
 
 # Notifications
 mako &
