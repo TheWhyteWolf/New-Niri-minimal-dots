@@ -1,0 +1,8 @@
+#!/bin/sh
+# Run by greetd as the greeter user. Wipe vt1 (cursor, text, scrollback) so
+# the hand-offs between boot, greeter and session flash plain black, then run
+# raingreet fullscreen in cage with its output in the journal rather than on
+# the VT:  journalctl -t raingreet
+# (From LifeBranch's greetd/lifegreet-cage.)
+printf '\033[?25l\033[2J\033[3J\033[H'
+exec systemd-cat -t raingreet -- cage -s -d -- /usr/local/bin/raingreet

@@ -1,0 +1,36 @@
+# Catppuccin Latte: catppuccin.com (MIT).
+name    = "Catppuccin Latte"
+variant = "light"
+about   = "Catppuccin's light flavour: milky whites with saturated accents"
+
+bg      = "#eff1f5"
+crust   = "#dce0e8"
+surface = "#e6e9ef"  # mantle
+overlay = "#ccd0da"  # surface0
+fg      = "#4c4f69"
+subtext = "#5c5f77"
+muted   = "#8c8fa1"
+accent  = "#7287fd"  # lavender
+accent2 = "#179299"  # teal
+accent3 = "#8839ef"  # mauve
+orange  = "#fe640b"
+selection = "#ccd0da"
+cursor  = "#dc8a78"
+bar_bg  = "#eff1f5"  # teal reads better on base than on crust
+
+color0  = "#5c5f77"
+color1  = "#d20f39"
+color2  = "#40a02b"
+color3  = "#df8e1d"
+color4  = "#1e66f5"
+color5  = "#ea76cb"
+color6  = "#179299"
+color7  = "#acb0be"
+color8  = "#6c6f85"
+color9  = "#d20f39"
+color10 = "#40a02b"
+color11 = "#df8e1d"
+color12 = "#1e66f5"
+color13 = "#ea76cb"
+color14 = "#179299"
+color15 = "#bcc0cc"

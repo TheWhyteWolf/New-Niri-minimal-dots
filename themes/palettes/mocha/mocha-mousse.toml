@@ -1,0 +1,20 @@
+# Built around Pantone's 2025 colour of the year, Mocha Mousse (#a47864).
+name    = "Mocha Mousse"
+variant = "dark"
+about   = "Pantone's 2025 Mocha Mousse, with sage and latte on cocoa"
+
+bg      = "#2b211d"
+fg      = "#f1e4d8"
+accent  = "#c9a084"  # latte
+accent2 = "#a3b8a6"  # sage
+accent3 = "#a47864"  # mocha mousse
+orange  = "#d49a6a"
+
+color0  = "#3a2e28"
+color1  = "#c77d6b"
+color2  = "#a3b591"
+color3  = "#e0be8a"
+color4  = "#93a5c4"
+color5  = "#c497a8"
+color6  = "#92bdb3"
+color7  = "#e6d6c6"

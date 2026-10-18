@@ -24,6 +24,9 @@ wallpaper=$(find "$wallpaper_dir" -maxdepth 1 -type f \
 
 if [ -n "$wallpaper" ]; then
   swaybg -i "$wallpaper" -m fill &
+  # The lock screen (rainlock) shows whatever the desktop shows.
+  state="${XDG_STATE_HOME:-$HOME/.local/state}"
+  mkdir -p "$state" && printf '%s\n' "$wallpaper" > "$state/niri-wallpaper"
 fi
 
 # Notifications

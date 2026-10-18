@@ -1,0 +1,11 @@
+#
+# PAM configuration for the rainlock screen locker.
+# Mirrors swaylock's packaged config: defer to the login stack
+# (system-login -> system-auth -> pam_unix + unix_chkpwd on Arch).
+#
+# Install: sudo install -Dm644 pam/rainlock /etc/pam.d/rainlock
+# rainlock refuses to start if this file is missing — without it PAM falls
+# through to /etc/pam.d/other (pam_deny) and the session could never unlock.
+#
+
+auth include login

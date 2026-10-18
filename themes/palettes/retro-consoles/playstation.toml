@@ -1,0 +1,25 @@
+# The original PlayStation: grey plastic and the four face buttons.
+name    = "PlayStation"
+variant = "dark"
+about   = "Grey console with triangle, circle, cross and square along the bar"
+
+bg      = "#1b1c20"
+surface = "#26282e"
+overlay = "#3b3e46"
+fg      = "#d9dadf"
+accent  = "#7cb2ec"
+accent2 = "#d9dadf"
+accent3 = "#e897d4"
+band1   = "#4fd6b8"  # triangle
+band2   = "#ff6b6b"  # circle
+band3   = "#7cb2ec"  # cross
+band4   = "#e897d4"  # square
+
+color0  = "#34363d"
+color1  = "#ff6b6b"
+color2  = "#4fd6b8"
+color3  = "#f9c21b"
+color4  = "#7cb2ec"
+color5  = "#e897d4"
+color6  = "#5ed0e6"
+color7  = "#c9cad0"

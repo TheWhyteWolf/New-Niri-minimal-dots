@@ -59,4 +59,7 @@ while true; do
     WALL=$(ls "$WALLDIR" | fuzzel --dmenu --prompt "Wallpaper (ESC to exit) > ")
     [ -z "$WALL" ] && exit 0
     set_wallpaper "$WALLDIR/$WALL" "$SETTER"
+    # The lock screen (rainlock) shows whatever the desktop shows.
+    state="${XDG_STATE_HOME:-$HOME/.local/state}"
+    mkdir -p "$state" && printf '%s\n' "$WALLDIR/$WALL" > "$state/niri-wallpaper"
 done

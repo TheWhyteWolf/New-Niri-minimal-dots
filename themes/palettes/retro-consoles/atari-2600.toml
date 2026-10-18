@@ -1,0 +1,21 @@
+# The Atari 2600 "Heavy Sixer": woodgrain, black ribs and orange.
+name    = "Atari 2600"
+variant = "dark"
+about   = "Woodgrain veneer, black ribs and Atari orange"
+
+bg      = "#1e140c"
+surface = "#2c1f14"
+overlay = "#45311f"
+fg      = "#ecdcc0"
+accent  = "#e8742a"
+accent2 = "#d8b37a"
+accent3 = "#d04a3a"
+
+color0  = "#3a2a1c"
+color1  = "#d8452a"
+color2  = "#9aa83a"
+color3  = "#e8b03a"
+color4  = "#5a8ab0"
+color5  = "#b0608a"
+color6  = "#6aa89a"
+color7  = "#dccbb0"

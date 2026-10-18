@@ -1,0 +1,26 @@
+# The Super Famicom and PAL SNES: grey and lavender, and the four
+# coloured face buttons along the bar.
+name    = "SNES"
+variant = "dark"
+about   = "Lavender-grey plastic and the red, yellow, blue, green buttons"
+
+bg      = "#23212e"
+surface = "#2f2c3d"
+overlay = "#45415a"
+fg      = "#dcdae8"
+accent  = "#a99fe0"
+accent2 = "#cfcbe6"
+accent3 = "#7e72cc"
+band1   = "#ef3e48"  # A
+band2   = "#f9c22e"  # B
+band3   = "#4d7ee8"  # X
+band4   = "#2fbf6a"  # Y
+
+color0  = "#3a364a"
+color1  = "#ef3e48"
+color2  = "#2fbf6a"
+color3  = "#f9c22e"
+color4  = "#4d7ee8"
+color5  = "#a99fe0"
+color6  = "#5fc8d8"
+color7  = "#cfcbe6"

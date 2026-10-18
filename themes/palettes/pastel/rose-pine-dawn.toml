@@ -1,0 +1,34 @@
+# Rosé Pine Dawn: rosepinetheme.com (MIT).
+name    = "Rosé Pine Dawn"
+variant = "light"
+about   = "Rosé Pine's morning: parchment, iris and pine"
+
+bg      = "#faf4ed"
+crust   = "#f2e9e1"
+surface = "#f2e9e1"
+overlay = "#dfdad9"
+fg      = "#575279"
+subtext = "#797593"
+muted   = "#9893a5"
+accent  = "#907aa9"  # iris
+accent2 = "#286983"  # pine
+accent3 = "#d7827e"  # rose
+warn    = "#ea9d34"
+selection = "#dfdad9"
+
+color0  = "#f2e9e1"
+color1  = "#b4637a"
+color2  = "#286983"
+color3  = "#ea9d34"
+color4  = "#56949f"
+color5  = "#907aa9"
+color6  = "#d7827e"
+color7  = "#575279"
+color8  = "#9893a5"
+color9  = "#b4637a"
+color10 = "#286983"
+color11 = "#ea9d34"
+color12 = "#56949f"
+color13 = "#907aa9"
+color14 = "#d7827e"
+color15 = "#575279"

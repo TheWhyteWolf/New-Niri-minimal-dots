@@ -1,0 +1,415 @@
+#!/usr/bin/env bash
+# theme — one colour palette for the whole desktop.
+#
+#   theme                  pick a palette in fuzzel; each pick applies at once, Esc closes
+#   theme set NAME         apply a palette
+#   theme random [FAMILY]  apply a random palette
+#   theme list [FAMILY]    the palettes, by family (* marks the one in use)
+#   theme show [NAME]      a palette's colours, in the terminal (default: the one in use)
+#   theme current          the palette in use
+#   theme reload           apply the current palette again, e.g. after editing a template
+#   theme check            lint every palette and template
+#
+# A palette is themes/palettes/<family>/<name>.toml. Each app's own config
+# includes one small generated file (waybar/theme.css, kitty/theme.conf, ...)
+# rendered from themes/templates/, so layout stays in the app's config and
+# only colours come from here. The generated files are gitignored.
+# themes/README.md has the palette format and the template placeholders.
+set -euo pipefail
+
+self=$(readlink -f "${BASH_SOURCE[0]}")
+THEMES=${THEME_DIR:-$(dirname "$(dirname "$(dirname "$self")")")/themes}
+CONF=${XDG_CONFIG_HOME:-$HOME/.config}
+STATE=${XDG_STATE_HOME:-$HOME/.local/state}/niri-theme
+CACHE=${XDG_CACHE_HOME:-$HOME/.cache}/niri-theme
+DEFAULT=catppuccin-mocha
+
+# Order of the families in lists and the picker. Any other folder in
+# palettes/ comes after these.
+FAMILIES=(originals mocha pastel rainbow cyberpunk retro-computers retro-consoles classics nature minimal)
+
+# template          generated file, under ~/.config    written only if this command exists (- : always)
+TARGETS=(
+  "niri.kdl         niri/theme.kdl                     niri"
+  "waybar.css       waybar/theme.css                   waybar"
+  "fuzzel.ini       fuzzel/theme.ini                   fuzzel"
+  "mako             mako/theme                         mako"
+  "kitty.conf       kitty/theme.conf                   kitty"
+  "alacritty.toml   alacritty/theme.toml               alacritty"
+  "gtk.css          gtk-3.0/theme.css                  -"
+  "gtk.css          gtk-4.0/theme.css                  -"
+  "qt6ct.conf       qt6ct/colors/theme.conf            -"
+  "btop.theme       btop/themes/current.theme          btop"
+  "cava             cava/themes/current                cava"
+  "fish             fish/conf.d/theme.fish             fish"
+  "rainlock         rainlock/theme                     rainlock"
+)
+
+# Reads one palette and prints every colour a template can use, one
+# "key<TAB>value" line each: the palette's own colours, the ones derived from
+# them, and .hex (no #) and .rgb ("r, g, b") forms of each.
+#   -v mode=check  print readability warnings instead
+#   -v mode=svg    print a swatch for the picker instead
+RESOLVE='
+function hexd(s,   i, v) { s = tolower(s); v = 0; for (i = 1; i <= length(s); i++) v = v * 16 + index("0123456789abcdef", substr(s, i, 1)) - 1; return v }
+function rgb(c) { R = hexd(substr(c, 2, 2)); G = hexd(substr(c, 4, 2)); B = hexd(substr(c, 6, 2)) }
+function ch(v) { v = int(v + 0.5); return v < 0 ? 0 : v > 255 ? 255 : v }
+# a, moved t of the way (0..1) towards b.
+function mix(a, b, t,   r, g, bl) { rgb(a); r = R; g = G; bl = B; rgb(b); return sprintf("#%02x%02x%02x", ch(r + (R - r) * t), ch(g + (G - g) * t), ch(bl + (B - bl) * t)) }
+function lin(v) { v /= 255; return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ^ 2.4 }
+function lum(c) { rgb(c); return 0.2126 * lin(R) + 0.7152 * lin(G) + 0.0722 * lin(B) }
+# WCAG contrast ratio, 1..21.
+function cr(a, b,   x, y) { x = lum(a); y = lum(b); return x > y ? (x + 0.05) / (y + 0.05) : (y + 0.05) / (x + 0.05) }
+# Text to draw on c: the palette s own bg or fg, whichever reads better;
+# black or white only if neither reads well.
+function on(c,   best) {
+  best = cr(c, P["bg"]) >= cr(c, P["fg"]) ? P["bg"] : P["fg"]
+  if (cr(c, best) < 4.5) {
+    if (cr(c, "#000000") > cr(c, best)) best = "#000000"
+    if (cr(c, "#ffffff") > cr(c, best)) best = "#ffffff"
+  }
+  return best
+}
+function def(k, v) { if (!(k in P)) P[k] = v }
+function warn(msg) { printf "%-22s %s\n", id, msg; warned = 1 }
+function lint(a, b, min, what) { if (cr(P[a], P[b]) < min) warn(sprintf("%s %.1f:1 (wants %s)", what, cr(P[a], P[b]), min)) }
+
+{
+  line = $0
+  if (line ~ /^[[:space:]]*(#.*)?$/) next
+  if (!match(line, /^[[:space:]]*[a-z0-9_]+[[:space:]]*=[[:space:]]*"[^"]*"/)) {
+    printf "theme: %s:%d: expected  key = \"value\"\n", FILENAME, FNR > "/dev/stderr"; bad = 1; next
+  }
+  s = substr(line, RSTART, RLENGTH)
+  k = s; sub(/^[[:space:]]*/, "", k); sub(/[[:space:]]*=.*/, "", k)
+  v = s; sub(/^[^"]*"/, "", v); sub(/"$/, "", v)
+  P[k] = v
+}
+
+END {
+  if (bad) exit 1
+  def("variant", "dark")
+  if (P["variant"] != "dark" && P["variant"] != "light") { printf "theme: %s: variant must be dark or light\n", FILENAME > "/dev/stderr"; exit 1 }
+  for (k in P) {
+    if (k == "name" || k == "variant" || k == "about") continue
+    if (P[k] !~ /^#[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]$/) {
+      printf "theme: %s: %s = \"%s\" is not a #rrggbb colour\n", FILENAME, k, P[k] > "/dev/stderr"; bad = 1
+    }
+    P[k] = tolower(P[k])
+  }
+  n = split("name bg fg accent color0 color1 color2 color3 color4 color5 color6 color7", need, " ")
+  for (i = 1; i <= n; i++) if (!(need[i] in P)) { printf "theme: %s: missing %s\n", FILENAME, need[i] > "/dev/stderr"; bad = 1 }
+  if (bad) exit 1
+  light = P["variant"] == "light"
+
+  # Surfaces step from bg towards fg; crust is the darkest layer (bar pills,
+  # tooltips) in both variants.
+  def("crust", light ? mix(P["bg"], "#000000", 0.07) : mix(P["bg"], "#000000", 0.35))
+  def("surface", mix(P["bg"], P["fg"], 0.10))
+  def("overlay", mix(P["bg"], P["fg"], 0.20))
+  def("surface2", mix(P["bg"], P["fg"], 0.30))
+  def("view", light ? mix(P["bg"], "#ffffff", 0.5) : mix(P["bg"], P["crust"], 0.5))
+  def("subtext", mix(P["fg"], P["bg"], 0.15))
+  def("muted", mix(P["fg"], P["bg"], 0.45))
+
+  # Terminal colours. The bright ones default to lighter normal ones (darker
+  # on a light palette).
+  def("color8", mix(P["bg"], P["fg"], 0.40))
+  for (i = 1; i <= 6; i++) def("color" (i + 8), light ? mix(P["color" i], "#000000", 0.12) : mix(P["color" i], "#ffffff", 0.18))
+  def("color15", light ? mix(P["color7"], "#000000", 0.15) : mix(P["color7"], "#ffffff", 0.40))
+  def("term_bg", P["bg"]); def("term_fg", P["fg"])
+
+  def("red", P["color1"]); def("green", P["color2"]); def("yellow", P["color3"])
+  def("blue", P["color4"]); def("magenta", P["color5"]); def("cyan", P["color6"])
+  def("orange", mix(P["red"], P["yellow"], 0.45))
+  def("accent2", P["cyan"]); def("accent3", P["magenta"])
+  def("urgent", P["red"]); def("warn", P["orange"]); def("ok", P["green"]); def("info", P["blue"])
+  def("border", P["accent"]); def("border_inactive", P["overlay"])
+  def("selection", mix(P["term_bg"], P["accent"], 0.30)); def("selection_fg", P["term_fg"])
+  def("cursor", P["accent"]); def("cursor_text", P["term_bg"])
+  def("bar_bg", P["crust"])
+  def("alert_bg", mix(P["bg"], P["urgent"], 0.12))
+  # The lock screen draws over a dimmed picture, so its text is always the light one.
+  def("lock_text", light ? P["bg"] : P["fg"])
+  def("on_accent", on(P["accent"])); def("on_urgent", on(P["urgent"]))
+  def("on_red", on(P["red"])); def("on_green", on(P["green"])); def("on_yellow", on(P["yellow"])); def("on_blue", on(P["blue"]))
+
+  # band1..8 colour the bar modules one by one, and gradient1..8 run through
+  # them (cava, btop). Unset, every module is accent2 and the gradient runs
+  # accent2 -> accent -> accent3.
+  nb = 0
+  while (("band" (nb + 1)) in P) nb++
+  if (nb == 0) { for (i = 1; i <= 8; i++) P["band" i] = P["accent2"]; ns = split(P["accent2"] " " P["accent"] " " P["accent3"], stop, " ") }
+  else { for (i = 1; i <= nb; i++) stop[i] = P["band" i]; ns = nb; for (i = nb + 1; i <= 8; i++) P["band" i] = P["band" ((i - 1) % nb + 1)] }
+  for (i = 0; i < 8; i++) {
+    pos = ns == 1 ? 0 : i / 7 * (ns - 1); j = int(pos)
+    P["gradient" (i + 1)] = j >= ns - 1 ? stop[ns] : mix(stop[j + 1], stop[j + 2], pos - j)
+  }
+
+  P["id"] = id; P["family"] = family
+  P["dark"] = light ? "false" : "true"
+  P["color_scheme"] = light ? "prefer-light" : "prefer-dark"
+  P["gtk_theme"] = light ? "adw-gtk3" : "adw-gtk3-dark"
+
+  if (mode == "check") {
+    lint("fg", "bg", 4.5, "fg on bg")
+    lint("term_fg", "term_bg", 4.5, "terminal fg on bg")
+    lint("muted", "bg", 2.0, "muted on bg")
+    lint("accent", "bg", 2.5, "accent on bg")
+    lint("on_accent", "accent", 4.0, "text on accent")
+    for (i = 1; i <= 8; i++) if (cr(P["band" i], P["bar_bg"]) < 3) { lint("band" i, "bar_bg", 3, "band" i " on bar"); break }
+    weak = ""
+    for (i = 1; i <= 6; i++) if (cr(P["color" i], P["term_bg"]) < 2.5) weak = weak " color" i
+    if (weak != "") printf "%-22s note: faint in the terminal:%s\n", id, weak
+    exit warned ? 3 : 0
+  }
+  if (mode == "svg") {
+    printf "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 64 64\">"
+    printf "<rect width=\"64\" height=\"64\" rx=\"14\" fill=\"%s\"/>", P["bg"]
+    printf "<rect x=\"10\" y=\"12\" width=\"30\" height=\"7\" rx=\"3.5\" fill=\"%s\"/>", P["fg"]
+    printf "<rect x=\"10\" y=\"24\" width=\"20\" height=\"5\" rx=\"2.5\" fill=\"%s\"/>", P["muted"]
+    printf "<rect x=\"6\" y=\"38\" width=\"14\" height=\"20\" rx=\"4\" fill=\"%s\"/>", P["accent"]
+    printf "<rect x=\"25\" y=\"38\" width=\"14\" height=\"20\" rx=\"4\" fill=\"%s\"/>", P["accent2"]
+    printf "<rect x=\"44\" y=\"38\" width=\"14\" height=\"20\" rx=\"4\" fill=\"%s\"/>", P["accent3"]
+    printf "</svg>\n"
+    exit 0
+  }
+  for (k in P) {
+    v = P[k]
+    print k "\t" v
+    if (v ~ /^#[0-9a-f]+$/) { rgb(v); print k ".hex\t" substr(v, 2); print k ".rgb\t" R ", " G ", " B }
+  }
+}'
+
+# Fills a template's {{key}} placeholders from a resolved palette. An unknown
+# key is an error, so a typo never ships half a theme.
+RENDER='
+NR == FNR { V[$1] = $2; next }
+{
+  out = ""; line = $0
+  while ((i = index(line, "{{")) > 0) {
+    j = index(substr(line, i + 2), "}}")
+    if (j == 0) break
+    key = substr(line, i + 2, j - 1)
+    if (key in V) out = out substr(line, 1, i - 1) V[key]
+    else { printf "theme: %s:%d: unknown placeholder {{%s}}\n", FILENAME, FNR, key > "/dev/stderr"; bad = 1; out = out substr(line, 1, i + j + 2) }
+    line = substr(line, i + j + 3)
+  }
+  print out line
+}
+END { exit bad }'
+
+die() { printf 'theme: %s\n' "$*" >&2; exit 1; }
+have() { command -v "$1" >/dev/null 2>&1 || [[ -x $HOME/.local/bin/$1 ]]; }
+
+# Every palette, families in order: "id<TAB>family<TAB>name<TAB>file".
+INDEX=()
+index_palettes() {
+  local fam dir files=() seen=" "
+  for fam in "${FAMILIES[@]}" $(cd "$THEMES/palettes" && printf '%s\n' */ | tr -d /); do
+    [[ $seen == *" $fam "* || ! -d $THEMES/palettes/$fam ]] && continue
+    seen+="$fam "
+    for dir in "$THEMES/palettes/$fam"/*.toml; do [[ -f $dir ]] && files+=("$dir"); done
+  done
+  (( ${#files[@]} )) || die "no palettes in $THEMES/palettes"
+  mapfile -t INDEX < <(awk -F'"' '
+    FNR == 1 { if (f) print id "\t" fam "\t" nm "\t" f; f = FILENAME; nm = ""
+               id = f; sub(/.*\//, "", id); sub(/\.toml$/, "", id)
+               fam = f; sub(/\/[^\/]*$/, "", fam); sub(/.*\//, "", fam) }
+    /^[[:space:]]*name[[:space:]]*=/ && nm == "" { nm = $2 }
+    END { print id "\t" fam "\t" nm "\t" f }' "${files[@]}")
+}
+
+palette_file() {  # id -> path
+  local row
+  for row in "${INDEX[@]}"; do
+    [[ ${row%%$'\t'*} == "$1" ]] && { printf '%s\n' "${row##*$'\t'}"; return 0; }
+  done
+  return 1
+}
+
+pretty() { local s=${1//-/ }; printf '%s\n' "${s^}"; }  # retro-consoles -> Retro consoles
+
+current() { [[ -s $STATE ]] && head -n1 "$STATE" || true; }
+
+resolve() {  # file id [mode]
+  local fam
+  fam=$(basename "$(dirname "$1")")
+  awk -v id="$2" -v family="$fam" -v mode="${3:-}" "$RESOLVE" "$1"
+}
+
+value() { awk -F'\t' -v k="$1" '$1 == k { print $2; exit }' "$CACHE/values"; }
+
+apply() {  # id
+  local id=$1 file t src dest need skipped=()
+  file=$(palette_file "$id") || die "no palette called '$id' (theme list shows them)"
+  mkdir -p "$CACHE"
+  resolve "$file" "$id" > "$CACHE/values.tmp" || die "$file has errors (above)"
+  mv -f "$CACHE/values.tmp" "$CACHE/values"
+  for t in "${TARGETS[@]}"; do
+    read -r src dest need <<<"$t"
+    if [[ $need != - ]] && ! have "$need"; then skipped+=("${dest%%/*}"); continue; fi
+    mkdir -p "$CONF/$(dirname "$dest")"
+    awk -F'\t' "$RENDER" "$CACHE/values" "$THEMES/templates/$src" > "$CONF/$dest.tmp" \
+      || { rm -f "$CONF/$dest.tmp"; die "template $src is broken (above); nothing past it was written"; }
+    mv -f "$CONF/$dest.tmp" "$CONF/$dest"
+  done
+  mkdir -p "$(dirname "$STATE")"
+  printf '%s\n' "$id" > "$STATE"
+  desktop_settings
+  reload_apps
+  printf 'theme: %s\n' "$(value name)"
+  (( ${#skipped[@]} )) && printf '       (not installed, skipped: %s)\n' "${skipped[*]}"
+  return 0
+}
+
+# GTK apps take light or dark from gsettings: GTK3 its theme (adw-gtk3 is
+# the one that follows theme.css), libadwaita and browsers the colour scheme.
+desktop_settings() {
+  have gsettings || return 0
+  local gtk
+  gtk=$(value gtk_theme)
+  gsettings set org.gnome.desktop.interface color-scheme "$(value color_scheme)" 2>/dev/null || true
+  if [[ -d /usr/share/themes/$gtk || -d $HOME/.local/share/themes/$gtk ]]; then
+    gsettings set org.gnome.desktop.interface gtk-theme "$gtk" 2>/dev/null || true
+  fi
+}
+
+# Running apps that can reload pick the palette up now; the rest (GTK and Qt
+# apps, fuzzel, btop, fish) at their next start. niri watches theme.kdl itself.
+reload_apps() {
+  pkill -USR2 -x waybar 2>/dev/null || true   # waybar: reload config and style
+  have makoctl && { makoctl reload 2>/dev/null || true; }
+  pkill -USR1 -x kitty 2>/dev/null || true    # kitty: re-read kitty.conf
+  pkill -USR2 -x cava 2>/dev/null || true     # cava: reload colours
+  # alacritty's live reload notices its main file changing, so nudge it.
+  [[ -f $CONF/alacritty/alacritty.toml ]] && touch "$CONF/alacritty/alacritty.toml"
+  return 0
+}
+
+# Swatches for the picker, regenerated when a palette changes.
+swatches() {
+  local row id file svg
+  mkdir -p "$CACHE/swatches"
+  for row in "${INDEX[@]}"; do
+    id=${row%%$'\t'*}; file=${row##*$'\t'}; svg=$CACHE/swatches/$id.svg
+    [[ -s $svg && $svg -nt $file && $svg -nt $self ]] && continue
+    resolve "$file" "$id" svg > "$svg.tmp" 2>/dev/null && mv -f "$svg.tmp" "$svg" || rm -f "$svg.tmp"
+  done
+}
+
+label() {  # row -> "Name · Family"
+  local IFS=$'\t' id fam name file
+  read -r id fam name file <<<"$1"
+  printf '%s  ·  %s\n' "$name" "$(pretty "$fam")"
+}
+
+pick() {
+  have fuzzel || die "the picker needs fuzzel; use theme list and theme set NAME"
+  # One fuzzel at a time, as waybar/scripts/fuzzel-menu.sh does.
+  pgrep -x fuzzel >/dev/null 2>&1 && return 0
+  swatches
+  local row i cur choice ids=() labels=() sel
+  declare -A by_label=()
+  for row in "${INDEX[@]}"; do
+    ids+=("${row%%$'\t'*}")
+    labels+=("$(label "$row")")
+    by_label[${labels[-1]}]=${ids[-1]}
+  done
+  while :; do
+    cur=$(current)
+    sel=${labels[0]}
+    for i in "${!ids[@]}"; do [[ ${ids[i]} == "$cur" ]] && sel=${labels[i]}; done
+    # fuzzel's icon syntax needs a NUL, which a bash string can't hold, so
+    # the menu goes straight from printf to the pipe. fuzzel re-reads its
+    # colours on each start, so the picker shows the palette just applied.
+    choice=$(for i in "${!ids[@]}"; do
+               printf '%s\0icon\x1f%s\n' "${labels[i]}" "$CACHE/swatches/${ids[i]}.svg"
+             done | fuzzel --dmenu --prompt "Theme ❯ " --width 42 --lines 14 --select "$sel") || return 0
+    [[ -n $choice && -n ${by_label[$choice]:-} ]] || return 0
+    apply "${by_label[$choice]}" >/dev/null
+  done
+}
+
+list() {  # [family]
+  local row id fam name file cur last=""
+  cur=$(current)
+  for row in "${INDEX[@]}"; do
+    IFS=$'\t' read -r id fam name file <<<"$row"
+    [[ -n ${1:-} && $fam != "$1" ]] && continue
+    [[ $fam != "$last" ]] && { [[ -n $last ]] && echo; pretty "$fam"; last=$fam; }
+    printf '  %s %-24s %s\n' "$([[ $id == "$cur" ]] && echo '*' || echo ' ')" "$id" "$name"
+  done
+  [[ -n $last ]] || die "no family called '$1' (theme list shows them)"
+}
+
+show() {  # [id]
+  local id=${1:-$(current)} file vals
+  [[ -n $id ]] || id=$DEFAULT
+  file=$(palette_file "$id") || die "no palette called '$id'"
+  vals=$(resolve "$file" "$id") || exit 1
+  awk -F'\t' '
+    { V[$1] = $2; if ($1 ~ /\.rgb$/) { t = $2; gsub(/, /, ";", t); RGB[substr($1, 1, length($1) - 4)] = t } }
+    function sw(k) { return sprintf("\033[48;2;%sm      \033[0m", RGB[k]) }
+    function row(title, keys,   n, a, i, line, names) {
+      n = split(keys, a, " "); line = ""; names = ""
+      for (i = 1; i <= n; i++) { line = line sw(a[i]) " "; names = names sprintf("%-7s", substr(a[i], 1, 6)) }
+      printf "  %-9s %s\n  %-9s \033[2m%s\033[0m\n", title, line, "", names
+    }
+    END {
+      printf "\n  \033[1m%s\033[0m  \033[2m%s · %s · %s\033[0m\n", V["name"], V["id"], V["family"], V["variant"]
+      if (V["about"] != "") printf "  \033[2m%s\033[0m\n", V["about"]
+      print ""
+      row("base", "crust bg surface overlay muted subtext fg")
+      row("accents", "accent accent2 accent3 urgent warn ok info")
+      row("terminal", "color0 color1 color2 color3 color4 color5 color6 color7")
+      row("", "color8 color9 color10 color11 color12 color13 color14 color15")
+      split(V["term_bg.rgb"], b, ", ")
+      printf "\n  \033[48;2;%s;%s;%sm  ", b[1], b[2], b[3]
+      for (i = 0; i < 8; i++) { split(V["color" i ".rgb"], c, ", "); printf "\033[38;2;%s;%s;%smAa ", c[1], c[2], c[3] }
+      split(V["term_fg.rgb"], c, ", "); printf "\033[38;2;%s;%s;%sm The quick brown fox  \033[0m\n\n", c[1], c[2], c[3]
+    }' <<<"$vals"
+}
+
+check() {
+  local row id file fails=0 st
+  for row in "${INDEX[@]}"; do
+    id=${row%%$'\t'*}; file=${row##*$'\t'}
+    st=0; resolve "$file" "$id" check || st=$?
+    case $st in 0) ;; 3) fails=$((fails + 1)) ;; *) fails=$((fails + 1)); echo "$id: does not load" ;; esac
+  done
+  # Ids must be unique across families.
+  printf '%s\n' "${INDEX[@]}" | cut -f1 | sort | uniq -d | sed 's/^/duplicate id: /'
+  # Every template must render against a palette.
+  local t src vals
+  vals=$(mktemp)
+  resolve "$(palette_file "$DEFAULT")" "$DEFAULT" > "$vals"
+  for t in "${TARGETS[@]}"; do
+    read -r src _ <<<"$t"
+    awk -F'\t' "$RENDER" "$vals" "$THEMES/templates/$src" >/dev/null || fails=$((fails + 1))
+  done
+  rm -f "$vals"
+  echo "${#INDEX[@]} palettes, $fails with warnings"
+}
+
+index_palettes
+case ${1:-pick} in
+  pick) pick ;;
+  set) [[ -n ${2:-} ]] || die "usage: theme set NAME"; apply "$2" ;;
+  random)
+    pool=()
+    for row in "${INDEX[@]}"; do
+      IFS=$'\t' read -r id fam _ _ <<<"$row"
+      [[ -n ${2:-} && $fam != "$2" ]] && continue
+      [[ $id == "$(current)" ]] || pool+=("$id")
+    done
+    (( ${#pool[@]} )) || die "no palettes to pick from"
+    apply "${pool[RANDOM % ${#pool[@]}]}" ;;
+  list) list "${2:-}" ;;
+  show) show "${2:-}" ;;
+  current) current ;;
+  reload) apply "$(current | grep . || echo "$DEFAULT")" ;;
+  check) check ;;
+  -h|--help|help) sed -n '2,17s/^# \{0,1\}//p' "$self" ;;
+  *) die "unknown command '$1' (theme --help)" ;;
+esac

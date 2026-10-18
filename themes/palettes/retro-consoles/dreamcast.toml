@@ -1,0 +1,26 @@
+# The Dreamcast: white plastic, the orange swirl, the four controller buttons.
+name    = "Dreamcast"
+variant = "light"
+about   = "White console, orange swirl, and the A, B, X, Y buttons"
+
+bg      = "#f4f4f2"
+crust   = "#e4e4e0"
+surface = "#ebebe8"
+fg      = "#2a2a2a"
+muted   = "#8a8a8a"
+accent  = "#d9530a"
+accent2 = "#1c62b0"
+accent3 = "#6a6a6a"
+band1   = "#d03a2f"  # A
+band2   = "#2b6cc4"  # B
+band3   = "#9a7400"  # X
+band4   = "#2e8a44"  # Y
+
+color0  = "#2a2a2a"
+color1  = "#d0381e"
+color2  = "#2f8f3f"
+color3  = "#a57400"
+color4  = "#1c62b0"
+color5  = "#a03c9a"
+color6  = "#148a96"
+color7  = "#d8d8d4"

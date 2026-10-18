@@ -1,0 +1,18 @@
+name    = "Pastel Lavender"
+variant = "dark"
+about   = "Lavender haze with powder blue and blush"
+
+bg      = "#1f1b2a"
+fg      = "#ece6fa"
+accent  = "#c8b6ff"
+accent2 = "#b8e0ff"
+accent3 = "#ffc8e6"
+
+color0  = "#302a40"
+color1  = "#ffadc0"
+color2  = "#bfe8c0"
+color3  = "#f8e5a8"
+color4  = "#b0c4ff"
+color5  = "#c8b6ff"
+color6  = "#b0e8f0"
+color7  = "#ddd6ee"

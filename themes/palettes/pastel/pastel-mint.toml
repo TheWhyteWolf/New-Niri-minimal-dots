@@ -1,0 +1,18 @@
+name    = "Pastel Mint"
+variant = "dark"
+about   = "Cool mint and sky over a deep green-grey"
+
+bg      = "#1b2421"
+fg      = "#e4f5ee"
+accent  = "#9ff0c8"
+accent2 = "#a8dcf0"
+accent3 = "#f0c8e0"
+
+color0  = "#2a3631"
+color1  = "#f4a7a7"
+color2  = "#9ff0c8"
+color3  = "#f2e2a2"
+color4  = "#a8c8f0"
+color5  = "#e0b8f0"
+color6  = "#a8e8e0"
+color7  = "#d8ebe3"

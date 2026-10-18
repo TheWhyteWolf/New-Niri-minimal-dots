@@ -43,13 +43,14 @@ This repository reproduces a complete Niri desktop environment from a fresh Arch
 - **Niri** — scrollable tiling compositor with blur, animations, and rounded corners
 - **Waybar** — modular status bar with player, clipboard, notifications, CPU, memory, power
 - **Fuzzel** — fast Wayland-native application launcher
-- **Mako** — notification daemon with sakura rice theme
+- **Mako** — notification daemon
 - **Fish** — smart shell with Starship prompt
 - **Alacritty + Kitty** — dual terminal setup
 - **Custom scripts** — power menu, wallpaper picker, clipboard history, notification history
 - **MIME associations** — PDF, images, code, archives, media all configured
 - **Portal configuration** — screen sharing and screenshots working out of the box
-- **GTK/Qt theming** — adw-gtk3-dark, Papirus-Dark icons, Bibata cursor
+- **GTK/Qt theming** — adw-gtk3, Papirus-Dark icons, Bibata cursor
+- **80 colour palettes** — one `theme` command recolours niri, waybar, fuzzel, mako, both terminals, GTK, Qt, btop, cava, fish and the lock screen together
 
 ---
 
@@ -112,12 +113,13 @@ That's it. The installer handles:
 | `Mod + Return` | Open terminal (Alacritty) |
 | `Alt + Return` | Open terminal (Kitty) |
 | `Mod + Space` | Application launcher (Fuzzel) |
-| `Mod + B` | Open browser (Firefox) |
+| `Mod + B` | Open browser (Brave) |
 | `Mod + C` | Open code editor (VS Code) |
 | `Mod + V` | Open Vesktop (Discord) |
 | `Mod + E` | Open file manager (Nautilus) |
 | `Mod + Z` | Open Zed editor |
 | `Mod + P` | Power menu (Fuzzel-based) |
+| `Mod + Shift + T` | Colour theme picker (Fuzzel-based) |
 | `Print` | Screenshot (Flameshot GUI) |
 
 ### Window Management
@@ -184,6 +186,7 @@ That's it. The installer handles:
 | `clipboard-history` | Browse and select from clipboard history | cliphist, fuzzel, wl-copy |
 | `notification-history` | Browse notification history | fuzzel, makoctl |
 | `mako-history` | View Mako notification log | fuzzel |
+| `theme` | Pick or set the colour palette for the whole desktop ([themes/README.md](themes/README.md)) | fuzzel, awk |
 
 ### Waybar Scripts (`waybar/scripts/`)
 
@@ -254,16 +257,27 @@ The following fonts are required (installed by `packages.txt`):
 
 ## Themes
 
+Colours come from one palette for the whole desktop: niri, waybar, fuzzel,
+mako, kitty, alacritty, GTK, Qt, btop, cava, fish and the lock screen. Press
+`Mod + Shift + T` to pick one; each pick applies at once. Or from a terminal:
+
+```bash
+theme set gruvbox-dark    # or: theme list, theme show nord, theme random cyberpunk
+```
+
+There are 80 palettes in ten families: this setup's original looks, soft
+mocha, soft pastels, vivid rainbow, cyberpunk, retro computers, retro
+consoles, the ricing classics (Nord, Gruvbox, Dracula, Tokyo Night, ...),
+nature and minimal. The default is Catppuccin Mocha.
+[themes/README.md](themes/README.md) lists them all and explains how to add
+your own.
+
 | Component | Theme / Style |
 |-----------|--------------|
-| GTK Theme | adw-gtk3-dark |
+| Colours | The palette in use (`theme`) |
+| GTK Theme | adw-gtk3, dark or light to match the palette |
 | Icon Theme | Papirus-Dark |
 | Cursor Theme | Bibata-Modern-Classic |
-| Waybar | Catppuccin Mocha (custom) |
-| Alacritty | Deep navy with sunset accents |
-| Kitty | Glassy Frost Dracula-inspired |
-| Mako | Sakura rice (pink/purple) |
-| Fuzzel | Catppuccin Mocha overlay |
 
 ---
 
@@ -272,7 +286,7 @@ The following fonts are required (installed by `packages.txt`):
 ```
 .
 ├── alacritty/
-│   └── alacritty.toml           # Terminal config (deep navy theme)
+│   └── alacritty.toml           # Terminal config (colours: theme.toml)
 ├── bottom/
 │   └── bottom.toml              # System monitor
 ├── btop/
@@ -312,11 +326,9 @@ The following fonts are required (installed by `packages.txt`):
 ├── gtk-4.0/
 │   ├── settings.ini             # GTK4 settings
 │   ├── colors.css
-│   ├── gtk.css                  # symlink → Catppuccin theme
-│   ├── gtk-dark.css             # symlink → Catppuccin theme
-│   └── assets/                  # symlink → theme assets
+│   └── gtk.css                  # Imports theme.css (the palette's colours)
 ├── kitty/
-│   ├── kitty.conf               # Kitty terminal (Glassy Frost theme)
+│   ├── kitty.conf               # Kitty terminal (colours: theme.conf)
 │   ├── colors.conf
 │   └── sessions/
 ├── lazygit/
@@ -326,9 +338,10 @@ The following fonts are required (installed by `packages.txt`):
 │   ├── set-wallpaper            # Wallpaper picker
 │   ├── clipboard-history        # Clipboard manager
 │   ├── notification-history     # Notification viewer
-│   └── mako-history             # Mako log viewer
+│   ├── mako-history             # Mako log viewer
+│   └── theme                    # Colour palette picker
 ├── mako/
-│   └── config                   # Notifications (sakura rice theme)
+│   └── config                   # Notifications (colours: theme)
 ├── mpv/
 │   ├── mpv.conf                 # Media player
 │   ├── fonts/
@@ -356,6 +369,10 @@ The following fonts are required (installed by `packages.txt`):
 │   └── qt6ct.conf               # Qt6 theme
 ├── starship/
 │   └── starship.toml            # Shell prompt
+├── themes/
+│   ├── palettes/                # 80 colour palettes, one folder per family
+│   ├── templates/               # One colour file per app, filled from the palette
+│   └── README.md
 ├── tmux/
 │   ├── tmux.conf                # Terminal multiplexer
 │   ├── workspace.conf           # Workspace/layout settings
@@ -370,7 +387,7 @@ The following fonts are required (installed by `packages.txt`):
 │   └── rogue.jpg                # Alternative wallpaper
 ├── waybar/
 │   ├── config.jsonc             # Bar config
-│   ├── style.css                # Bar styling (Catppuccin Mocha)
+│   ├── style.css                # Bar styling (colours: theme.css)
 │   ├── modules/                 # Individual module configs
 │   └── scripts/                 # 11 custom scripts
 ├── xdg-desktop-portal/
@@ -409,14 +426,10 @@ swaybg -i "$HOME/Pictures/wallpapers/your-wallpaper.jpg" -m fill &
 
 ### Change the Color Scheme
 
-| File | Controls |
-|------|----------|
-| `waybar/style.css` | Waybar colors |
-| `mako/config` | Notification colors |
-| `alacritty/alacritty.toml` | Alacritty colors |
-| `kitty/kitty.conf` | Kitty colors |
-| `niri-lock/style.css` | Lock screen colors |
-| `fuzzel/fuzzel.ini` | Launcher colors |
+Press `Mod + Shift + T`, or run `theme set <palette>`. To make your own
+palette, copy one in `themes/palettes/` and change it; only `bg`, `fg`,
+`accent` and the eight terminal colours are required. See
+[themes/README.md](themes/README.md).
 
 ### Add Waybar Modules
 

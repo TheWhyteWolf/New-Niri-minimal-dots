@@ -197,3 +197,12 @@ window-rule {
     geometry-corner-radius 20
     clip-to-geometry true
 }
+
+// Dropdown terminal (Mod+Grave): floats at the top; scratch-term sets the
+// exact geometry via float-snap and parks it on the trailing empty
+// workspace while hidden.
+window-rule {
+    match app-id=r#"^scratchterm$"#
+    open-floating true
+    default-floating-position x=0 y=8 relative-to="top"
+}

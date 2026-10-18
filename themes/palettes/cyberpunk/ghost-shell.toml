@@ -1,0 +1,18 @@
+name    = "Ghost in the Shell"
+variant = "dark"
+about   = "Section 9 at night: thermoptic teal, data green and violet"
+
+bg      = "#0b1416"
+fg      = "#cdeee6"
+accent  = "#3bd6c6"
+accent2 = "#8fd694"
+accent3 = "#c792ea"
+
+color0  = "#18282b"
+color1  = "#e06c75"
+color2  = "#8fd694"
+color3  = "#e5c07b"
+color4  = "#5fa8d3"
+color5  = "#c792ea"
+color6  = "#3bd6c6"
+color7  = "#bcd8d2"

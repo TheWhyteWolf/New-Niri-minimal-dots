@@ -1,0 +1,22 @@
+# The Family Computer: cream plastic, deep red trim and gold.
+name    = "Famicom"
+variant = "light"
+about   = "Cream and burgundy with gold trim, like the original Famicom"
+
+bg      = "#f2ead8"
+crust   = "#e5d9bf"
+surface = "#ebe1cb"
+fg      = "#3a1a1a"
+muted   = "#8a7464"
+accent  = "#a6192e"
+accent2 = "#7a5c12"
+accent3 = "#2f5a9a"
+
+color0  = "#3a2a22"
+color1  = "#a6192e"
+color2  = "#4f7a28"
+color3  = "#946c0a"
+color4  = "#2f5a9a"
+color5  = "#8a2f7a"
+color6  = "#2a7a7a"
+color7  = "#d8ccb0"

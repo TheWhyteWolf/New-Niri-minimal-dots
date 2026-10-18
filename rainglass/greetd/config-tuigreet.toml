@@ -1,0 +1,10 @@
+# Fallback login screen: tuigreet, text only. From a TTY:
+#   sudo install -Dm644 rainglass/greetd/config-tuigreet.toml /etc/greetd/config.toml
+#   sudo systemctl restart greetd
+
+[terminal]
+vt = 1
+
+[default_session]
+command = "tuigreet --cmd niri-session --sessions /usr/local/share/wayland-sessions:/usr/share/wayland-sessions --remember --remember-user-session --asterisks --time --power-shutdown 'systemctl poweroff' --power-reboot 'systemctl reboot'"
+user = "greeter"

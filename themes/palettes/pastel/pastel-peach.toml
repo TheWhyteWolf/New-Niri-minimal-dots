@@ -1,0 +1,21 @@
+name    = "Pastel Peach"
+variant = "light"
+about   = "Peach sorbet paper with coral, sea-glass and plum ink"
+
+bg      = "#fff3ec"
+crust   = "#f7e2d6"
+surface = "#fbe9df"
+fg      = "#5a4048"
+muted   = "#a08a8a"
+accent  = "#d0603f"  # coral
+accent2 = "#3f8587"  # sea glass
+accent3 = "#a05f92"  # plum
+
+color0  = "#5a4048"
+color1  = "#c4485e"
+color2  = "#4f8a52"
+color3  = "#a87518"
+color4  = "#4a74ac"
+color5  = "#a05f92"
+color6  = "#3f8587"
+color7  = "#e8d2c8"

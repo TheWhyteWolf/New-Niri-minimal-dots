@@ -1,0 +1,32 @@
+# Colours from Pepto's C64 palette (2001), lightened where one vanishes on the blue.
+name    = "Commodore 64"
+variant = "dark"
+about   = "READY. Light blue on the C64's blue screen, with its yellow and green"
+
+bg      = "#352879"
+crust   = "#241a5c"
+fg      = "#a8a0ec"
+subtext = "#8e84d8"
+muted   = "#6c5eb5"
+accent  = "#b8c76f"  # yellow
+accent2 = "#9ad284"  # light green
+accent3 = "#70a4b2"  # cyan
+urgent  = "#e8a090"
+cursor  = "#a8a0ec"
+
+color0  = "#000000"
+color1  = "#c08070"
+color2  = "#9ad284"
+color3  = "#b8c76f"
+color4  = "#9a90e0"
+color5  = "#b88ad0"
+color6  = "#70a4b2"
+color7  = "#959595"
+color8  = "#444444"
+color9  = "#d8a090"
+color10 = "#b4e0a0"
+color11 = "#d8e090"
+color12 = "#b8b0f0"
+color13 = "#d0a8e0"
+color14 = "#9cc8d4"
+color15 = "#ffffff"

@@ -1,0 +1,18 @@
+[package]
+name = "rainglass"
+description = "Your wallpaper seen through a rainy window: the shared renderer for rainlock and raingreet"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+# EGL + GLES2, as in LifeBranch's lifewall: GLSL ES 1.00 runs on every Mesa
+# driver, old Intel iGPUs included.
+khronos-egl = { version = "6", features = ["static"] }
+glow = "0.17"
+wayland-sys = { version = "0.31", features = ["client", "egl"] }
+wayland-backend = { version = "0.3", features = ["client_system"] }
+# Pinned like LifeBranch's components (lifelock, lifegreet, lifewall).
+smithay-client-toolkit = "=0.20.0"
+lifefont = { path = "../lifefont" }  # from LifeBranch: lazy glyphs over ab_glyph
+image = { version = "0.25", default-features = false, features = ["jpeg", "png", "webp"] }

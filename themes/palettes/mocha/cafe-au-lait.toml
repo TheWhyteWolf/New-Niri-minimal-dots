@@ -1,0 +1,24 @@
+name    = "Café au Lait"
+variant = "light"
+about   = "Milky coffee paper with dark-roast ink and a sage accent"
+
+bg      = "#f3ebe1"
+crust   = "#e6dacb"
+surface = "#ebe0d3"
+fg      = "#3e2c23"
+subtext = "#5a4436"
+muted   = "#9a8574"
+accent  = "#9c6644"  # coffee
+accent2 = "#4f7d6c"  # sage
+accent3 = "#a8506f"  # raspberry
+
+color0  = "#3e2c23"
+color1  = "#b5452f"
+color2  = "#5e7d3c"
+color3  = "#a0700f"
+color4  = "#3f6a96"
+color5  = "#9b4f7b"
+color6  = "#3f8076"
+color7  = "#d8c9b8"
+color8  = "#7a6555"
+color15 = "#c4b2a0"

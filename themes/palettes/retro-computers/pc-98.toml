@@ -1,0 +1,22 @@
+# The PC-98 look: the Japanese 80s/90s computer best remembered for its
+# moody dithered pixel art.
+name    = "PC-98"
+variant = "dark"
+about   = "Dithered midnight blues with pink and teal, like a PC-98 adventure game"
+
+bg      = "#10102a"
+surface = "#1c1c42"
+overlay = "#2c2c5e"
+fg      = "#e8e0ff"
+accent  = "#ff66aa"
+accent2 = "#44ccdd"
+accent3 = "#ffcc66"
+
+color0  = "#20203c"
+color1  = "#ff5577"
+color2  = "#55dd99"
+color3  = "#ffcc66"
+color4  = "#6688ff"
+color5  = "#ff66aa"
+color6  = "#44ccdd"
+color7  = "#d8d0f0"

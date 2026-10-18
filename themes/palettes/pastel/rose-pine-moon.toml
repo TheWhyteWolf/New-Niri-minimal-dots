@@ -1,0 +1,34 @@
+# Rosé Pine Moon: rosepinetheme.com (MIT).
+name    = "Rosé Pine Moon"
+variant = "dark"
+about   = "Rosé Pine with a little more moonlight in the base"
+
+bg      = "#232136"
+crust   = "#1a1828"
+surface = "#2a273f"
+overlay = "#44415a"
+fg      = "#e0def4"
+subtext = "#908caa"
+muted   = "#6e6a86"
+accent  = "#c4a7e7"  # iris
+accent2 = "#9ccfd8"  # foam
+accent3 = "#ea9a97"  # rose
+warn    = "#f6c177"
+selection = "#44415a"
+
+color0  = "#393552"
+color1  = "#eb6f92"
+color2  = "#3e8fb0"
+color3  = "#f6c177"
+color4  = "#9ccfd8"
+color5  = "#c4a7e7"
+color6  = "#ea9a97"
+color7  = "#e0def4"
+color8  = "#6e6a86"
+color9  = "#eb6f92"
+color10 = "#3e8fb0"
+color11 = "#f6c177"
+color12 = "#9ccfd8"
+color13 = "#c4a7e7"
+color14 = "#ea9a97"
+color15 = "#e0def4"

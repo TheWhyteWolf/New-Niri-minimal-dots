@@ -1,0 +1,61 @@
+#%PAM-1.0
+#
+# PAM configuration for greetd, with gnome-keyring auto-unlock.
+#
+# Replaces the greetd package's own /etc/pam.d/greetd (which is the stock file
+# plus nothing). The three pam_gnome_keyring lines hand the login password to
+# gnome-keyring-daemon so the login keyring is unlocked by logging in, instead
+# of every Secret Service consumer (Brave, Element, Kleopatra) prompting separately.
+# Arch wires these into /etc/pam.d/sddm out of the box; swapping the display
+# manager for greetd left them behind.
+#
+# ORDER IS LOAD-BEARING. `-auth` must come AFTER `auth include`, not before:
+# pam_unix (inside the include) is what prompts for the password and stores it
+# as PAM_AUTHTOK, and pam_gnome_keyring's auth module only reads that stored
+# token. Put it first and the session logs
+#     gkr-pam: no password is available for user
+# and the keyring stays locked. `-session ... auto_start` likewise comes after
+# `session include`. Mirror /etc/pam.d/sddm if in doubt — it is the reference.
+#
+# The leading `-` means "skip silently if the module is missing"; `optional`
+# means a keyring failure never blocks login. Neither saves you from a syntax
+# error, which PAM treats as fatal for the whole stack.
+#
+# Auto-unlock only works when the login keyring's password equals the login
+# password. If it still prompts, that is the mismatch, not this file:
+# unlock it once and reset it in seahorse (Login -> Change Password).
+#
+# Install with rainglass/greeter-install.sh, which stages this file under a scratch
+# service name, authenticates against THAT, and only promotes it to
+# /etc/pam.d/greetd once it answers — so a bad edit can never take the live
+# login screen down with it. By hand, the same shape:
+#     sudo install -Dm644 rainglass/greetd/pam/greetd /etc/pam.d/greetd-verify
+#     sudo pamtester greetd-verify "$(id -un)" authenticate acct_mgmt
+#     sudo install -Dm644 rainglass/greetd/pam/greetd /etc/pam.d/greetd   # only if it passed
+#     sudo rm /etc/pam.d/greetd-verify
+# open_session/close_session are deliberately not tested: they do not
+# simulate a session, they really run pam_gnome_keyring auto_start.
+#
+# Before rebooting, have a working way back in. The usual one is a TTY
+# (Ctrl+Alt+F3) — but check it actually works on your hardware first: on T2
+# Macs the console switches while the internal keyboard stays dead there
+# (it needs apple-bce). The robust alternative is an SSH session from a
+# second machine, opened BEFORE you reboot. Tailscale SSH is a good one:
+# it authenticates on tailnet identity rather than PAM, so a broken stack
+# here cannot lock it out.
+#
+
+auth       required     pam_securetty.so
+auth       requisite    pam_nologin.so
+auth       include      system-local-login
+-auth      optional     pam_gnome_keyring.so
+account    include      system-local-login
+# use_authtok reuses the token a PRIOR password module stored, so the
+# include is not optional decoration: without it the group has no pam_unix,
+# nothing stores a token, and any password change through this service
+# silently fails to update the keyring. /etc/pam.d/sddm stacks them the
+# same way round.
+password   include      system-local-login
+-password  optional     pam_gnome_keyring.so    use_authtok
+session    include      system-local-login
+-session   optional     pam_gnome_keyring.so    auto_start

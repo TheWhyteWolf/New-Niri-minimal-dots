@@ -1,0 +1,37 @@
+# Catppuccin Mocha: catppuccin.com (MIT). The default, and closest to how
+# waybar, fuzzel and fish looked before the theme system.
+name    = "Catppuccin Mocha"
+variant = "dark"
+about   = "Soothing pastel on deep mocha, the darkest Catppuccin flavour"
+
+bg      = "#1e1e2e"  # base
+crust   = "#11111b"
+surface = "#313244"  # surface0
+overlay = "#45475a"  # surface1
+fg      = "#cdd6f4"  # text
+subtext = "#bac2de"  # subtext1
+muted   = "#6c7086"  # overlay0
+accent  = "#b4befe"  # lavender
+accent2 = "#94e2d5"  # teal
+accent3 = "#cba6f7"  # mauve
+orange  = "#fab387"  # peach
+selection = "#45475a"
+cursor  = "#f5e0dc"  # rosewater
+bar_bg  = "#000000"  # the black bar pills from before
+
+color0  = "#45475a"
+color1  = "#f38ba8"
+color2  = "#a6e3a1"
+color3  = "#f9e2af"
+color4  = "#89b4fa"
+color5  = "#f5c2e7"
+color6  = "#94e2d5"
+color7  = "#bac2de"
+color8  = "#585b70"
+color9  = "#f38ba8"
+color10 = "#a6e3a1"
+color11 = "#f9e2af"
+color12 = "#89b4fa"
+color13 = "#f5c2e7"
+color14 = "#94e2d5"
+color15 = "#a6adc8"

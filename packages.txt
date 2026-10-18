@@ -8,12 +8,12 @@ waybar
 fuzzel
 mako
 swaybg
-nm-applet
 polkit-gnome
 gnome-keyring
 sddm
 nwg-look
 swaync
+swayidle
 wlsunset
 xwayland-satellite
 xdg-desktop-portal-gnome
@@ -87,7 +87,7 @@ poppler-qt6
 gnumeric
 
 # ── Browser ────────────────────────────────────────────────────
-firefox
+brave-bin
 
 # ── Development ────────────────────────────────────────────────
 neovim
@@ -149,12 +149,13 @@ papirus-icon-theme
 adw-gtk-theme
 qt6ct
 qt5ct
+qt6-wayland
+qt5-wayland
 
 # ── Misc GUI Applications ──────────────────────────────────────
 obsidian
 obs-studio
 godot
-pomoru
 extension-manager
 gnome-tweaks
 calcurse
@@ -196,7 +197,7 @@ xf86-video-amdgpu
 # ── Qt/GTK Integration ────────────────────────────────────────
 polkit-qt6
 qca-qt6
-qtvirtualkeyboard
+qt6-virtualkeyboard
 qt6-speech
 kdsoap-ws-discovery-client
 kwindowsystem

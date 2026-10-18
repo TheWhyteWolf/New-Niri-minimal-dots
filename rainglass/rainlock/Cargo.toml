@@ -1,0 +1,15 @@
+[package]
+name = "rainlock"
+description = "ext-session-lock screen locker for niri: your wallpaper through a rainy window"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+rainglass = { path = "../rainglass" }
+# Pinned: app.rs follows LifeBranch's lifelock, written against 0.20.0's
+# session_lock and seat/keyboard repeat semantics.
+smithay-client-toolkit = "=0.20.0"
+libc = "0.2"
+zeroize = "1"
+pam-client = "0.5"

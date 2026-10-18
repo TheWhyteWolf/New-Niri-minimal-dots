@@ -39,7 +39,7 @@ echo -e "${NC}"
 # ── Install Packages ───────────────────────────────────────────
 log "Installing packages from packages.txt..."
 if [ -f "$DOTFILES_DIR/packages.txt" ]; then
-    sudo pacman -S --needed --noconfirm - < "$DOTFILES_DIR/packages.txt"
+    grep -vE '^\s*(#|$)' "$DOTFILES_DIR/packages.txt" | sudo pacman -S --needed --noconfirm -
 else
     warn "packages.txt not found, skipping package installation"
 fi
@@ -102,7 +102,7 @@ for dir in "$CONFIG_DIR"/*/; do
 
     # Skip directories that aren't configs
     case "$app_name" in
-        .git|Screenshots|wallpapers|local|nvim|xdg-desktop-portal) continue ;;
+        .git|Screenshots|wallpapers|local|nvim|xdg-desktop-portal|rainglass|themes) continue ;;
     esac
 
     link_config "$dir" "$app_name"
@@ -118,6 +118,14 @@ if [ -d "$CONFIG_DIR/local/bin" ]; then
     done
     log "Linked local/bin scripts"
 fi
+
+# Brave reads its flags from a file at the top of ~/.config, not a directory.
+[ -f "$CONFIG_DIR/brave-flags.conf" ] && ln -sfn "$CONFIG_DIR/brave-flags.conf" "$HOME/.config/brave-flags.conf"
+
+# Colours: waybar, mako, cava and the rest include files that `theme`
+# generates, so write them now (the palette in use, else Catppuccin Mocha).
+log "Applying the colour theme..."
+"$CONFIG_DIR/local/bin/theme" reload || warn "theme reload failed; run: theme reload"
 
 # ── Install wallpapers ────────────────────────────────────────
 log "Installing wallpapers..."
@@ -155,7 +163,7 @@ fi
 # ── Fix Hardcoded Paths ───────────────────────────────────────
 log "Fixing hardcoded paths..."
 find "$CONFIG_DIR" -type f \( -name "*.css" -o -name "*.kdl" -o -name "*.toml" -o -name "*.ini" -o -name "*.sh" -o -name "*.jsonc" -o -name "*.json" -o -name "bookmarks" -o -name "*.conf" -o -name "layout" -o -name "flameshot.ini" -o -name "*.tres" \) \
-    -exec sed -i "s|__HOME__|$HOME|g" {} \; 2>/dev/null || true
+    -exec sed -i "s|/home/whyte|$HOME|g" {} \; 2>/dev/null || true
 
 # ── Set Fish as Default Shell ──────────────────────────────────
 if [ "$SHELL" != "/usr/bin/fish" ]; then

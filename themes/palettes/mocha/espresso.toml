@@ -1,0 +1,24 @@
+name    = "Espresso"
+variant = "dark"
+about   = "Dark roast and crema: caramel, pistachio and raspberry on brown"
+
+bg      = "#1c1512"
+crust   = "#120d0b"
+surface = "#2a201b"
+overlay = "#3b2e27"
+fg      = "#eadbc8"
+subtext = "#cdb9a3"
+muted   = "#8a7462"
+accent  = "#d4a373"  # caramel
+accent2 = "#9caf88"  # pistachio
+accent3 = "#c98b8b"  # raspberry
+orange  = "#d98a52"
+
+color0  = "#2e241f"
+color1  = "#c8664f"
+color2  = "#9caf88"
+color3  = "#dfb46b"
+color4  = "#8a9ec0"
+color5  = "#b98aa6"
+color6  = "#8fb3a8"
+color7  = "#d9c8b4"

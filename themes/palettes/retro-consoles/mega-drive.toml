@@ -1,0 +1,21 @@
+# The Sega Mega Drive / Genesis: black plastic with red and gold "16-BIT".
+name    = "Mega Drive"
+variant = "dark"
+about   = "Black plastic, red and gold 16-BIT lettering, Sega blue"
+
+bg      = "#0b0b0b"
+surface = "#1a1a1a"
+overlay = "#2e2e2e"
+fg      = "#e8e8e8"
+accent  = "#e8202a"
+accent2 = "#d4a520"
+accent3 = "#3a8ff0"
+
+color0  = "#262626"
+color1  = "#ef2a2a"
+color2  = "#3cc45a"
+color3  = "#e8b830"
+color4  = "#2f7ff0"
+color5  = "#c050d0"
+color6  = "#30c0e0"
+color7  = "#cccccc"

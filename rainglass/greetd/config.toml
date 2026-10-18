@@ -1,0 +1,10 @@
+# greetd: raingreet under cage. Installed to /etc/greetd/config.toml by
+# rainglass/greeter-install.sh. The fallback, if raingreet ever breaks, is
+# config-tuigreet.toml (see that script's header for the way back).
+
+[terminal]
+vt = 1
+
+[default_session]
+command = "/usr/local/bin/raingreet-cage"
+user = "greeter"

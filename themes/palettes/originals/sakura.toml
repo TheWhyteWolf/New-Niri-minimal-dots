@@ -1,0 +1,21 @@
+# Mako's "sakura rice" before the theme system, grown into a full palette.
+name    = "Sakura"
+variant = "dark"
+about   = "Cherry-blossom pink and lavender on plum: mako's old look"
+
+bg      = "#241c2c"
+fg      = "#f5e6ee"
+subtext = "#c9a8bc"
+accent  = "#ff7eb3"
+accent2 = "#b0aef0"
+accent3 = "#ffb3d1"
+urgent  = "#f07178"
+
+color0  = "#3a2d44"
+color1  = "#f07178"
+color2  = "#9ece9a"
+color3  = "#f2c48d"
+color4  = "#9fb1f0"
+color5  = "#ff7eb3"
+color6  = "#89d4d0"
+color7  = "#e8d6e0"

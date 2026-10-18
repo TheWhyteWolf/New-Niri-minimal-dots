@@ -23,9 +23,29 @@ binds {
     Mod+C { spawn "code"; }
     Mod+V { spawn "Vesktop"; }
     Mod+E { spawn "nautilus"; }
-    Mod+B { spawn "firefox"; }
-    Mod+Z { spawn "__HOME__/.local/bin/zed";}
+    Mod+B { spawn "brave"; }
+    Mod+Z { spawn "/home/whyte/.local/bin/zed";}
     Alt+Return { spawn "kitty";}
+    Mod+Shift+C hotkey-overlay-title="Clipboard history" { spawn-sh "~/.local/bin/clipboard-history"; }
+    Mod+Shift+T hotkey-overlay-title="Colour theme" { spawn-sh "~/.local/bin/theme"; }
+    // Straight to the lock script, not via loginctl: that needs swayidle running.
+    Mod+Alt+Escape hotkey-overlay-title="Lock screen" { spawn-sh "~/.config/niri-lock/lock.sh"; }
+    // Recovery: if the locker ever wedges (niri shows its red "locker died"
+    // screen), hand the lock over to gtklock. Works while locked.
+    Mod+Shift+Alt+Escape allow-when-locked=true hotkey-overlay-title="Force gtklock (recovery)" { spawn-sh "pkill -x -9 rainlock; sleep 1; gtklock -d --config ~/.config/niri-lock/config.ini"; }
+
+    // Dropdown terminal and floating-window snapping (ported from LifeBranch).
+    Mod+Grave     hotkey-overlay-title="Dropdown terminal" { spawn-sh "~/.local/bin/scratch-term"; }
+    Mod+Alt+Left  hotkey-overlay-title="Snap float left"  { spawn-sh "~/.local/bin/float-snap left"; }
+    Mod+Alt+Down  hotkey-overlay-title="Snap float down"  { spawn-sh "~/.local/bin/float-snap down"; }
+    Mod+Alt+Up    hotkey-overlay-title="Snap float up"    { spawn-sh "~/.local/bin/float-snap up"; }
+    Mod+Alt+Right hotkey-overlay-title="Snap float right" { spawn-sh "~/.local/bin/float-snap right"; }
+    Mod+Alt+H hotkey-overlay-title=null { spawn-sh "~/.local/bin/float-snap left"; }
+    Mod+Alt+J hotkey-overlay-title=null { spawn-sh "~/.local/bin/float-snap down"; }
+    Mod+Alt+K hotkey-overlay-title=null { spawn-sh "~/.local/bin/float-snap up"; }
+    Mod+Alt+L hotkey-overlay-title=null { spawn-sh "~/.local/bin/float-snap right"; }
+    Mod+Alt+C hotkey-overlay-title="Center float"  { spawn-sh "~/.local/bin/float-snap center"; }
+    Mod+Alt+R hotkey-overlay-title="Un-snap float" { spawn-sh "~/.local/bin/float-snap restore"; }
 
 
     // Use spawn-sh to run a shell command. Do this if you need pipes, multiple commands, etc.
@@ -215,14 +235,14 @@ binds {
     // Expel the bottom window from the focused column to the right.
     Mod+Period { expel-window-from-column; }
 
-    Mod+R { switch-preset-column-width; }
+    Mod+R { spawn "fuzzel"; }
     // Cycling through the presets in reverse order is also possible.
     // Mod+R { switch-preset-column-width-back; }
     Mod+Shift+R { switch-preset-window-height; }
     Mod+Ctrl+R { reset-window-height; }
     Mod+F { maximize-column; }
     Mod+Shift+F { fullscreen-window; }
-    Mod+P { spawn "__HOME__/.local/bin/powermenu"; }
+    Mod+P { spawn "/home/whyte/.local/bin/powermenu"; }
     // Expand the focused column to space not taken up by other fully visible columns.
     // Makes the column "fill the rest of the space".
     Mod+Ctrl+F { expand-column-to-available-width; }

@@ -1,0 +1,17 @@
+[workspace]
+resolver = "2"
+members = ["lifefont", "rainglass", "rainlock", "raingreet"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "GPL-3.0-or-later"
+
+[profile.release]
+lto = true
+strip = true
+# The locker must never unwind through secure state, in any build.
+panic = "abort"
+
+[profile.dev]
+panic = "abort"
