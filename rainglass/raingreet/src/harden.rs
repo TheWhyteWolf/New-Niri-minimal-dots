@@ -9,7 +9,10 @@
 /// /proc/<pid>/mem access from non-root peers).
 pub fn harden_common() {
     unsafe {
-        let rl = libc::rlimit { rlim_cur: 0, rlim_max: 0 };
+        let rl = libc::rlimit {
+            rlim_cur: 0,
+            rlim_max: 0,
+        };
         if libc::setrlimit(libc::RLIMIT_CORE, &rl) != 0 {
             eprintln!("raingreet: warning: could not disable core dumps");
         }
@@ -46,11 +49,17 @@ pub fn lock_all_memory() {
     // ~170 MiB at 4K/Retina. Demand real headroom before arming MCL_FUTURE.
     const FULL_LOCK_MIN: libc::rlim_t = 512 * 1024 * 1024;
     unsafe {
-        let mut rl = libc::rlimit { rlim_cur: 0, rlim_max: 0 };
+        let mut rl = libc::rlimit {
+            rlim_cur: 0,
+            rlim_max: 0,
+        };
         if libc::getrlimit(libc::RLIMIT_MEMLOCK, &mut rl) == 0 {
             if rl.rlim_cur < rl.rlim_max {
                 // Take whatever headroom the hard limit already allows.
-                let want = libc::rlimit { rlim_cur: rl.rlim_max, rlim_max: rl.rlim_max };
+                let want = libc::rlimit {
+                    rlim_cur: rl.rlim_max,
+                    rlim_max: rl.rlim_max,
+                };
                 if libc::setrlimit(libc::RLIMIT_MEMLOCK, &want) == 0 {
                     rl.rlim_cur = rl.rlim_max;
                 }
@@ -79,7 +88,10 @@ mod tests {
     fn hardening_syscalls_succeed() {
         super::harden_common();
         unsafe {
-            let mut rl = libc::rlimit { rlim_cur: 99, rlim_max: 99 };
+            let mut rl = libc::rlimit {
+                rlim_cur: 99,
+                rlim_max: 99,
+            };
             assert_eq!(libc::getrlimit(libc::RLIMIT_CORE, &mut rl), 0);
             assert_eq!(rl.rlim_cur, 0);
             assert_eq!(libc::prctl(libc::PR_GET_DUMPABLE, 0, 0, 0, 0), 0);

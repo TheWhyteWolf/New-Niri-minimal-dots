@@ -52,11 +52,19 @@ impl Gpu {
         // SAFETY: a live wl_display pointer for the whole process lifetime.
         let display = unsafe { egl.get_display(display) }.ok_or("no EGL display")?;
         egl.initialize(display).map_err(err("eglInitialize"))?;
-        egl.bind_api(egl::OPENGL_ES_API).map_err(err("eglBindAPI"))?;
+        egl.bind_api(egl::OPENGL_ES_API)
+            .map_err(err("eglBindAPI"))?;
         let attrs = [
-            egl::SURFACE_TYPE, egl::WINDOW_BIT,
-            egl::RENDERABLE_TYPE, egl::OPENGL_ES2_BIT,
-            egl::RED_SIZE, 8, egl::GREEN_SIZE, 8, egl::BLUE_SIZE, 8,
+            egl::SURFACE_TYPE,
+            egl::WINDOW_BIT,
+            egl::RENDERABLE_TYPE,
+            egl::OPENGL_ES2_BIT,
+            egl::RED_SIZE,
+            8,
+            egl::GREEN_SIZE,
+            8,
+            egl::BLUE_SIZE,
+            8,
             egl::NONE,
         ];
         let config = egl
@@ -64,18 +72,29 @@ impl Gpu {
             .map_err(err("eglChooseConfig"))?
             .ok_or("no EGL config")?;
         let ctx_attrs = [egl::CONTEXT_CLIENT_VERSION, 2, egl::NONE];
-        let context = egl.create_context(display, config, None, &ctx_attrs).map_err(err("eglCreateContext"))?;
+        let context = egl
+            .create_context(display, config, None, &ctx_attrs)
+            .map_err(err("eglCreateContext"))?;
         // Surfaceless is fine for compiling shaders and for offscreen
         // framebuffers (EGL_KHR_surfaceless_context, which every Mesa driver has).
-        egl.make_current(display, None, None, Some(context)).map_err(err("eglMakeCurrent"))?;
+        egl.make_current(display, None, None, Some(context))
+            .map_err(err("eglMakeCurrent"))?;
         // SAFETY: the loader returns entry points for the context just made current.
         let gl = unsafe {
             glow::Context::from_loader_function(|name| {
-                egl.get_proc_address(name).map_or(std::ptr::null(), |f| f as *const c_void)
+                egl.get_proc_address(name)
+                    .map_or(std::ptr::null(), |f| f as *const c_void)
             })
         };
         let quad = unsafe { quad(&gl)? };
-        Ok(Gpu { egl, display, config, context, gl, quad })
+        Ok(Gpu {
+            egl,
+            display,
+            config,
+            context,
+            gl,
+            quad,
+        })
     }
 
     /// An EGL surface for `surface` (a `wl_surface*`) at `w`x`h` buffer pixels.
@@ -86,7 +105,10 @@ impl Gpu {
             return Err("wl_egl_window_create failed".into());
         }
         // SAFETY: the window was just created and outlives the surface (Drop order).
-        let made = unsafe { self.egl.create_window_surface(self.display, self.config, window.cast(), None) };
+        let made = unsafe {
+            self.egl
+                .create_window_surface(self.display, self.config, window.cast(), None)
+        };
         let surface = match made {
             Ok(s) => s,
             Err(e) => {
@@ -94,27 +116,44 @@ impl Gpu {
                 return Err(format!("eglCreateWindowSurface: {e}"));
             }
         };
-        let t = Target { window, surface, display: self.display, w, h };
+        let t = Target {
+            window,
+            surface,
+            display: self.display,
+            w,
+            h,
+        };
         self.bind(&t)?;
         // Never block in eglSwapBuffers: pacing is the caller's frame callbacks,
         // so a hidden output simply stops being drawn instead of stalling.
-        self.egl.swap_interval(self.display, 0).map_err(err("eglSwapInterval"))?;
+        self.egl
+            .swap_interval(self.display, 0)
+            .map_err(err("eglSwapInterval"))?;
         Ok(t)
     }
 
     pub fn bind(&self, t: &Target) -> Result<(), String> {
         self.egl
-            .make_current(self.display, Some(t.surface), Some(t.surface), Some(self.context))
+            .make_current(
+                self.display,
+                Some(t.surface),
+                Some(t.surface),
+                Some(self.context),
+            )
             .map_err(err("eglMakeCurrent"))
     }
 
     /// Back to no surface, for offscreen rendering.
     pub fn unbind(&self) -> Result<(), String> {
-        self.egl.make_current(self.display, None, None, Some(self.context)).map_err(err("eglMakeCurrent"))
+        self.egl
+            .make_current(self.display, None, None, Some(self.context))
+            .map_err(err("eglMakeCurrent"))
     }
 
     pub fn present(&self, t: &Target) -> Result<(), String> {
-        self.egl.swap_buffers(self.display, t.surface).map_err(err("eglSwapBuffers"))
+        self.egl
+            .swap_buffers(self.display, t.surface)
+            .map_err(err("eglSwapBuffers"))
     }
 
     /// Compile and link a full-screen fragment shader against `VERT`.
@@ -142,7 +181,13 @@ impl Gpu {
 
     /// An RGB or RGBA texture with linear filtering (no mipmaps: GLES2 can't
     /// mipmap textures whose sides aren't powers of two).
-    pub fn texture(&self, format: u32, w: usize, h: usize, data: Option<&[u8]>) -> Result<glow::Texture, String> {
+    pub fn texture(
+        &self,
+        format: u32,
+        w: usize,
+        h: usize,
+        data: Option<&[u8]>,
+    ) -> Result<glow::Texture, String> {
         let gl = &self.gl;
         unsafe {
             let tex = gl.create_texture()?;
@@ -157,8 +202,15 @@ impl Gpu {
             }
             gl.pixel_store_i32(glow::UNPACK_ALIGNMENT, 1);
             gl.tex_image_2d(
-                glow::TEXTURE_2D, 0, format as i32, w as i32, h as i32, 0,
-                format, glow::UNSIGNED_BYTE, glow::PixelUnpackData::Slice(data),
+                glow::TEXTURE_2D,
+                0,
+                format as i32,
+                w as i32,
+                h as i32,
+                0,
+                format,
+                glow::UNSIGNED_BYTE,
+                glow::PixelUnpackData::Slice(data),
             );
             Ok(tex)
         }
@@ -170,8 +222,15 @@ impl Gpu {
             gl.bind_texture(glow::TEXTURE_2D, Some(tex));
             gl.pixel_store_i32(glow::UNPACK_ALIGNMENT, 1);
             gl.tex_sub_image_2d(
-                glow::TEXTURE_2D, 0, 0, 0, w as i32, h as i32,
-                format, glow::UNSIGNED_BYTE, glow::PixelUnpackData::Slice(Some(data)),
+                glow::TEXTURE_2D,
+                0,
+                0,
+                0,
+                w as i32,
+                h as i32,
+                format,
+                glow::UNSIGNED_BYTE,
+                glow::PixelUnpackData::Slice(Some(data)),
             );
         }
     }
@@ -200,13 +259,27 @@ impl Gpu {
             let tex = self.texture(glow::RGBA, w as usize, h as usize, None)?;
             let fbo = gl.create_framebuffer()?;
             gl.bind_framebuffer(glow::FRAMEBUFFER, Some(fbo));
-            gl.framebuffer_texture_2d(glow::FRAMEBUFFER, glow::COLOR_ATTACHMENT0, glow::TEXTURE_2D, Some(tex), 0);
+            gl.framebuffer_texture_2d(
+                glow::FRAMEBUFFER,
+                glow::COLOR_ATTACHMENT0,
+                glow::TEXTURE_2D,
+                Some(tex),
+                0,
+            );
             if gl.check_framebuffer_status(glow::FRAMEBUFFER) != glow::FRAMEBUFFER_COMPLETE {
                 return Err("offscreen framebuffer incomplete".into());
             }
             draw();
             let mut px = vec![0u8; (w * h * 4) as usize];
-            gl.read_pixels(0, 0, w, h, glow::RGBA, glow::UNSIGNED_BYTE, glow::PixelPackData::Slice(Some(&mut px)));
+            gl.read_pixels(
+                0,
+                0,
+                w,
+                h,
+                glow::RGBA,
+                glow::UNSIGNED_BYTE,
+                glow::PixelPackData::Slice(Some(&mut px)),
+            );
             gl.bind_framebuffer(glow::FRAMEBUFFER, None);
             gl.delete_framebuffer(fbo);
             gl.delete_texture(tex);

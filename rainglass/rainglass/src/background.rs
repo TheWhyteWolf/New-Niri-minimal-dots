@@ -37,12 +37,21 @@ pub struct Source(DynamicImage);
 /// lock screen shouldn't keep around, and decoding is the slow part.
 pub fn load_source(path: &str, max_w: u32, max_h: u32) -> Result<Source, String> {
     let img = image::open(path).map_err(|e| format!("{path}: {e}"))?;
-    let s = (max_w as f64 / img.width().max(1) as f64).max(max_h as f64 / img.height().max(1) as f64);
+    let s =
+        (max_w as f64 / img.width().max(1) as f64).max(max_h as f64 / img.height().max(1) as f64);
     if s >= 1.0 {
         return Ok(Source(DynamicImage::ImageRgb8(img.to_rgb8())));
     }
-    let (w, h) = ((img.width() as f64 * s).ceil() as u32, (img.height() as f64 * s).ceil() as u32);
-    Ok(Source(DynamicImage::ImageRgb8(image::imageops::resize(&img.to_rgb8(), w.max(1), h.max(1), FilterType::Triangle))))
+    let (w, h) = (
+        (img.width() as f64 * s).ceil() as u32,
+        (img.height() as f64 * s).ceil() as u32,
+    );
+    Ok(Source(DynamicImage::ImageRgb8(image::imageops::resize(
+        &img.to_rgb8(),
+        w.max(1),
+        h.max(1),
+        FilterType::Triangle,
+    ))))
 }
 
 impl Background {
@@ -59,7 +68,8 @@ impl Background {
 
     /// A plain colour, for when there is no wallpaper to show.
     pub fn solid(rgb: [u8; 3], w: u32, h: u32) -> Background {
-        let img = DynamicImage::ImageRgb8(RgbImage::from_pixel(w.max(1), h.max(1), image::Rgb(rgb)));
+        let img =
+            DynamicImage::ImageRgb8(RgbImage::from_pixel(w.max(1), h.max(1), image::Rgb(rgb)));
         Background::from_image(&img, w, h)
     }
 
@@ -89,8 +99,14 @@ fn cover(img: &DynamicImage, w: u32, h: u32) -> RgbImage {
     let s = (w as f64 / iw).max(h as f64 / ih);
     // Crop in source pixels first: resizing a 6600px photo whole only to
     // throw half of it away is most of the cost.
-    let (cw, ch) = ((w as f64 / s).round().min(iw) as u32, (h as f64 / s).round().min(ih) as u32);
-    let (cx, cy) = ((img.width() - cw.min(img.width())) / 2, (img.height() - ch.min(img.height())) / 2);
+    let (cw, ch) = (
+        (w as f64 / s).round().min(iw) as u32,
+        (h as f64 / s).round().min(ih) as u32,
+    );
+    let (cx, cy) = (
+        (img.width() - cw.min(img.width())) / 2,
+        (img.height() - ch.min(img.height())) / 2,
+    );
     let cropped = img.crop_imm(cx, cy, cw.max(1), ch.max(1)).to_rgb8();
     image::imageops::resize(&cropped, w, h, FilterType::Triangle)
 }
@@ -104,7 +120,13 @@ fn box_blur(px: &mut [u8], w: usize, h: usize, r: usize) {
 
 fn blur_1d(src: &[u8], dst: &mut [u8], w: usize, h: usize, r: usize, horizontal: bool) {
     let (len, lines) = if horizontal { (w, h) } else { (h, w) };
-    let at = |line: usize, i: usize| if horizontal { (line * w + i) * 3 } else { (i * w + line) * 3 };
+    let at = |line: usize, i: usize| {
+        if horizontal {
+            (line * w + i) * 3
+        } else {
+            (i * w + line) * 3
+        }
+    };
     let win = (2 * r + 1) as u32;
     for line in 0..lines {
         let mut sum = [0u32; 3];

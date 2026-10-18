@@ -5,7 +5,7 @@
 
 use super::{read_exact_fd, write_all_fd, MAX_MSG, REPLY_FD, REQUEST_FD};
 use crate::harden;
-use pam_client::{ConversationHandler, Context, ErrorCode, Flag};
+use pam_client::{Context, ConversationHandler, ErrorCode, Flag};
 use std::cell::RefCell;
 use std::ffi::{CStr, CString};
 use std::rc::Rc;
@@ -152,7 +152,10 @@ pub fn run() -> ! {
 
 fn authenticate(user: &str, password: CString) -> (bool, String) {
     let msgs = Rc::new(RefCell::new(Vec::new()));
-    let conv = OneShot { password: Some(password), msgs: Rc::clone(&msgs) };
+    let conv = OneShot {
+        password: Some(password),
+        msgs: Rc::clone(&msgs),
+    };
     let mut ctx = match Context::new(SERVICE, Some(user), conv) {
         Ok(c) => c,
         Err(e) => {
@@ -178,7 +181,11 @@ fn authenticate(user: &str, password: CString) -> (bool, String) {
     // Only failures carry text to the UI: modules like pam_faillock explain
     // themselves through the conversation ("account locked, N minutes left"),
     // which beats the generic wrong-flash. A plain bad password logs nothing.
-    let msg = if ok { String::new() } else { msgs.borrow().join(" · ") };
+    let msg = if ok {
+        String::new()
+    } else {
+        msgs.borrow().join(" · ")
+    };
     if !msg.is_empty() {
         eprintln!("rainlock: auth-child: pam: {msg}");
     }

@@ -24,7 +24,7 @@ binds {
     Mod+V { spawn "Vesktop"; }
     Mod+E { spawn "nautilus"; }
     Mod+B { spawn "brave"; }
-    Mod+Z { spawn "/home/whyte/.local/bin/zed";}
+    Mod+Z { spawn "__HOME__/.local/bin/zed";}
     Alt+Return { spawn "kitty";}
     Mod+Shift+C hotkey-overlay-title="Clipboard history" { spawn-sh "~/.local/bin/clipboard-history"; }
     Mod+Shift+T hotkey-overlay-title="Colour theme" { spawn-sh "~/.local/bin/theme"; }
@@ -242,7 +242,7 @@ binds {
     Mod+Ctrl+R { reset-window-height; }
     Mod+F { maximize-column; }
     Mod+Shift+F { fullscreen-window; }
-    Mod+P { spawn "/home/whyte/.local/bin/powermenu"; }
+    Mod+P { spawn "__HOME__/.local/bin/powermenu"; }
     // Expand the focused column to space not taken up by other fully visible columns.
     // Makes the column "fill the rest of the space".
     Mod+Ctrl+F { expand-column-to-available-width; }

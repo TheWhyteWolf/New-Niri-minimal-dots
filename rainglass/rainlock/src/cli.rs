@@ -38,7 +38,7 @@ impl Default for Cfg {
             density: 0.7,
             dim: 0.85,
             clock_px: 120.0,
-            text: [236, 239, 244],  // #eceff4
+            text: [236, 239, 244],   // #eceff4
             urgent: [224, 108, 117], // #e06c75
             still: false,
             debug_timing: false,
@@ -115,10 +115,14 @@ fn set(cfg: &mut Cfg, key: &str, val: &str) -> bool {
 }
 
 fn load_file(cfg: &mut Cfg, path: &str) {
-    let Ok(body) = std::fs::read_to_string(path) else { return };
+    let Ok(body) = std::fs::read_to_string(path) else {
+        return;
+    };
     for raw in body.lines() {
         let line = strip_comment(raw).trim();
-        let Some((k, v)) = line.split_once('=') else { continue };
+        let Some((k, v)) = line.split_once('=') else {
+            continue;
+        };
         if !set(cfg, k.trim(), v) {
             eprintln!("rainlock: {path}: unknown key {:?} (ignored)", k.trim());
         }
@@ -133,7 +137,9 @@ fn session_wallpaper() -> Option<String> {
         .unwrap_or_else(|| format!("{}/.local/state", std::env::var("HOME").unwrap_or_default()));
     let path = std::fs::read_to_string(format!("{state}/niri-wallpaper")).ok()?;
     let path = path.trim();
-    std::path::Path::new(path).is_file().then(|| path.to_string())
+    std::path::Path::new(path)
+        .is_file()
+        .then(|| path.to_string())
 }
 
 pub fn parse() -> Cfg {
@@ -192,7 +198,10 @@ mod tests {
     #[test]
     fn hex_values_survive_comment_stripping() {
         assert_eq!(strip_comment("text=#eceff4"), "text=#eceff4");
-        assert_eq!(strip_comment("density=0.5   # lighter rain"), "density=0.5   ");
+        assert_eq!(
+            strip_comment("density=0.5   # lighter rain"),
+            "density=0.5   "
+        );
         assert_eq!(strip_comment("# whole line"), "");
     }
 

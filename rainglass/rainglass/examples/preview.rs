@@ -43,7 +43,10 @@ fn parse() -> Result<Args, String> {
             "--size" => {
                 let s = v()?;
                 let (w, h) = s.split_once('x').ok_or("--size WxH")?;
-                a.size = (w.parse().map_err(|_| "--size WxH")?, h.parse().map_err(|_| "--size WxH")?);
+                a.size = (
+                    w.parse().map_err(|_| "--size WxH")?,
+                    h.parse().map_err(|_| "--size WxH")?,
+                );
             }
             "--time" => a.time = v()?.parse().map_err(|_| "--time SECONDS")?,
             "--fog" => a.fog = v()?.parse().map_err(|_| "--fog 0..1")?,
@@ -81,17 +84,51 @@ fn run() -> Result<(), String> {
         let font = Font::from_path("/usr/share/fonts/TTF/JetBrainsMonoNerdFont-Light.ttf")?;
         let s = h as f32 / 1080.0;
         let lines = [
-            Line { text: "21:47".into(), px: 150.0 * s, rgb: [236, 239, 244], alpha: 0.95 },
-            Line { text: "SUN 18 OCT".into(), px: 30.0 * s, rgb: [216, 222, 233], alpha: 0.8 },
-            Line { text: "wrong password".into(), px: 22.0 * s, rgb: [224, 108, 117], alpha: 0.95 },
+            Line {
+                text: "21:47".into(),
+                px: 150.0 * s,
+                rgb: [236, 239, 244],
+                alpha: 0.95,
+            },
+            Line {
+                text: "SUN 18 OCT".into(),
+                px: 30.0 * s,
+                rgb: [216, 222, 233],
+                alpha: 0.8,
+            },
+            Line {
+                text: "wrong password".into(),
+                px: 22.0 * s,
+                rgb: [224, 108, 117],
+                alpha: 0.95,
+            },
         ];
-        let band = rainglass::text::band(&font, &lines, w as usize, (h as f32 * 0.32) as i32, (18.0 * s) as usize);
+        let band = rainglass::text::band(
+            &font,
+            &lines,
+            w as usize,
+            (h as f32 * 0.32) as i32,
+            (18.0 * s) as usize,
+        );
         plate.set_text(&gpu, band.as_ref())?;
     }
-    let mut f = Frame { time: a.time, fog: a.fog, density: a.density, ..Frame::default() };
+    let mut f = Frame {
+        time: a.time,
+        fog: a.fog,
+        density: a.density,
+        ..Frame::default()
+    };
     if a.splash {
-        for (i, (x, y, ago)) in [(0.3, 0.35, 0.08), (0.62, 0.55, 0.6), (0.45, 0.7, 2.0)].into_iter().enumerate() {
-            f.impacts[i] = Impact { x, y, landed: a.time - ago, wiped: -1.0 };
+        for (i, (x, y, ago)) in [(0.3, 0.35, 0.08), (0.62, 0.55, 0.6), (0.45, 0.7, 2.0)]
+            .into_iter()
+            .enumerate()
+        {
+            f.impacts[i] = Impact {
+                x,
+                y,
+                landed: a.time - ago,
+                wiped: -1.0,
+            };
         }
     }
     if a.bench > 0 {
@@ -101,7 +138,10 @@ fn run() -> Result<(), String> {
         gpu.offscreen(w as i32, h as i32, || {
             use glow::HasContext;
             for i in 0..a.bench {
-                let g = Frame { time: a.time + i as f32 / 30.0, ..f.clone() };
+                let g = Frame {
+                    time: a.time + i as f32 / 30.0,
+                    ..f.clone()
+                };
                 let t = std::time::Instant::now();
                 rain.draw(&gpu, &plate, &g);
                 unsafe { gpu.gl.finish() };
@@ -109,12 +149,17 @@ fn run() -> Result<(), String> {
             }
         })?;
         let renderer = unsafe { glow::HasContext::get_parameter_string(&gpu.gl, glow::RENDERER) };
-        eprintln!("preview: {} frames at {w}x{h} on {renderer}: {:.2} ms each", a.bench, took.as_secs_f64() * 1000.0 / a.bench as f64);
+        eprintln!(
+            "preview: {} frames at {w}x{h} on {renderer}: {:.2} ms each",
+            a.bench,
+            took.as_secs_f64() * 1000.0 / a.bench as f64
+        );
     }
     let t1 = std::time::Instant::now();
     let px = gpu.offscreen(w as i32, h as i32, || rain.draw(&gpu, &plate, &f))?;
     eprintln!("preview: frame in {:?}", t1.elapsed());
-    image::save_buffer(&a.png, &px, w, h, image::ExtendedColorType::Rgba8).map_err(|e| format!("{}: {e}", a.png))?;
+    image::save_buffer(&a.png, &px, w, h, image::ExtendedColorType::Rgba8)
+        .map_err(|e| format!("{}: {e}", a.png))?;
     eprintln!("preview: wrote {}", a.png);
     plate.free(&gpu);
     rain.free(&gpu);

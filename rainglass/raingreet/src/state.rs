@@ -19,14 +19,20 @@ pub enum Phase {
     /// Username box + clock + session line; NO cube (all-ember map).
     EnterUser,
     /// Cube scaling up out of the box; password keys are already accepted.
-    Growing { since: f64 },
+    Growing {
+        since: f64,
+    },
     EnterPassword,
     /// Submission in flight; input ignored, verify wave plays.
     Validating,
     /// Wrong password: rust flash + reseed playing at full scale.
-    Failed { since: f64 },
+    Failed {
+        since: f64,
+    },
     /// Cube scaling back down; input ignored. Ends in EnterUser, cleared.
-    Collapsing { since: f64 },
+    Collapsing {
+        since: f64,
+    },
     /// start_session sent; waiting for greetd's Success, then we exit 0.
     Starting,
 }
@@ -43,7 +49,10 @@ fn ease_out_cubic(x: f64) -> f64 {
 
 impl Greeter {
     pub fn new() -> Greeter {
-        Greeter { phase: Phase::EnterUser, username: String::new() }
+        Greeter {
+            phase: Phase::EnterUser,
+            username: String::new(),
+        }
     }
 
     /// Cube silhouette scale 0..=1 for scene time `t` (drives map choice).
@@ -51,7 +60,9 @@ impl Greeter {
         match self.phase {
             Phase::EnterUser => 0.0,
             Phase::Growing { since } => ease_out_cubic((t - since) / GROW_SECS),
-            Phase::EnterPassword | Phase::Validating | Phase::Failed { .. } | Phase::Starting => 1.0,
+            Phase::EnterPassword | Phase::Validating | Phase::Failed { .. } | Phase::Starting => {
+                1.0
+            }
             Phase::Collapsing { since } => {
                 // Ease-in: shrinks slowly, then collapses fast into the box.
                 let x = ((t - since) / COLLAPSE_SECS).clamp(0.0, 1.0);
@@ -189,7 +200,10 @@ mod tests {
         assert!(!g.password_submit());
         g.advance(t_collapse + COLLAPSE_SECS + 1e-9);
         assert_eq!(g.phase, Phase::EnterUser);
-        assert!(g.username.is_empty(), "username must be re-entered every time");
+        assert!(
+            g.username.is_empty(),
+            "username must be re-entered every time"
+        );
     }
 
     #[test]

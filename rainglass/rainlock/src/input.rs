@@ -81,7 +81,7 @@ pub enum AuthState {
 /// swaylock's: 1.5s input-idle, 3s auth-invalid reset, 10s password clear.
 #[derive(Debug, PartialEq, Default)]
 pub struct TimerOps {
-    pub arm_input_idle: bool,   // -> InputState::Idle after 1.5s
+    pub arm_input_idle: bool,     // -> InputState::Idle after 1.5s
     pub arm_password_clear: bool, // -> clear buffer after 10s
     pub cancel_password_clear: bool,
 }
@@ -98,13 +98,21 @@ pub struct Machine {
 
 impl Machine {
     pub fn new() -> Machine {
-        Machine { input: InputState::Idle, auth: AuthState::Idle, failed_attempts: 0 }
+        Machine {
+            input: InputState::Idle,
+            auth: AuthState::Idle,
+            failed_attempts: 0,
+        }
     }
 
     /// A letter was appended.
     pub fn on_letter(&mut self) -> TimerOps {
         self.input = InputState::Letter;
-        TimerOps { arm_input_idle: true, arm_password_clear: true, ..Default::default() }
+        TimerOps {
+            arm_input_idle: true,
+            arm_password_clear: true,
+            ..Default::default()
+        }
     }
 
     /// Backspace removed a character; `now_empty` = buffer emptied by it.
@@ -113,20 +121,32 @@ impl Machine {
             self.on_clear()
         } else {
             self.input = InputState::Backspace;
-            TimerOps { arm_input_idle: true, arm_password_clear: true, ..Default::default() }
+            TimerOps {
+                arm_input_idle: true,
+                arm_password_clear: true,
+                ..Default::default()
+            }
         }
     }
 
     /// Buffer cleared (Esc/Ctrl+U/Ctrl+C/Ctrl+BS/emptied/10s timer).
     pub fn on_clear(&mut self) -> TimerOps {
         self.input = InputState::Clear;
-        TimerOps { arm_input_idle: true, cancel_password_clear: true, ..Default::default() }
+        TimerOps {
+            arm_input_idle: true,
+            cancel_password_clear: true,
+            ..Default::default()
+        }
     }
 
     /// A bare modifier went down.
     pub fn on_neutral(&mut self) -> TimerOps {
         self.input = InputState::Neutral;
-        TimerOps { arm_input_idle: true, arm_password_clear: true, ..Default::default() }
+        TimerOps {
+            arm_input_idle: true,
+            arm_password_clear: true,
+            ..Default::default()
+        }
     }
 
     /// Submit requested. Returns whether the submission should proceed
@@ -138,7 +158,13 @@ impl Machine {
         }
         self.input = InputState::Idle;
         self.auth = AuthState::Validating;
-        (true, TimerOps { cancel_password_clear: true, ..Default::default() })
+        (
+            true,
+            TimerOps {
+                cancel_password_clear: true,
+                ..Default::default()
+            },
+        )
     }
 
     /// Auth verdict arrived. Returns true if the session should unlock.
@@ -170,10 +196,16 @@ mod tests {
 
     #[test]
     fn keysym_table() {
-        assert_eq!(key_action(Keysym::Return, Some("\r"), false), Action::Submit);
+        assert_eq!(
+            key_action(Keysym::Return, Some("\r"), false),
+            Action::Submit
+        );
         assert_eq!(key_action(Keysym::KP_Enter, None, false), Action::Submit);
         assert_eq!(key_action(Keysym::m, Some("m"), true), Action::Submit);
-        assert_eq!(key_action(Keysym::m, Some("m"), false), Action::Append("m".into()));
+        assert_eq!(
+            key_action(Keysym::m, Some("m"), false),
+            Action::Append("m".into())
+        );
         assert_eq!(key_action(Keysym::BackSpace, None, false), Action::PopChar);
         assert_eq!(key_action(Keysym::BackSpace, None, true), Action::ClearAll);
         assert_eq!(key_action(Keysym::Delete, None, true), Action::ClearAll);
@@ -185,7 +217,10 @@ mod tests {
         assert_eq!(key_action(Keysym::C, Some("C"), true), Action::ClearAll);
         assert_eq!(key_action(Keysym::M, Some("M"), true), Action::Submit);
         assert_eq!(key_action(Keysym::Shift_L, None, false), Action::Neutral);
-        assert_eq!(key_action(Keysym::a, Some("a"), false), Action::Append("a".into()));
+        assert_eq!(
+            key_action(Keysym::a, Some("a"), false),
+            Action::Append("a".into())
+        );
         // Ctrl+letter combos that aren't bound: swallowed, not typed.
         assert_eq!(key_action(Keysym::a, Some("a"), true), Action::Ignore);
         assert_eq!(key_action(Keysym::F5, None, false), Action::Ignore);

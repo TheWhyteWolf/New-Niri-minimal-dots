@@ -90,12 +90,12 @@ That's it. The installer handles:
 2. **Installs yay** (AUR helper) if not present
 3. **Installs AUR packages** via yay (niri-git, brave-bin, vesktop-bin, etc.)
 4. **Creates directories** (`~/.config`, `~/.local/bin`, `~/Pictures/wallpapers`)
-5. **Symlinks all config directories** from the repo to `~/.config/` (backs up existing)
+5. **Installs config directories** into `~/.config/` (copies those needing home paths, symlinks the rest; backs up existing)
 6. **Links local/bin scripts** to `~/.local/bin/`
 7. **Installs wallpapers** from `wallpapers/` to `~/Pictures/wallpapers/`
 8. **Installs MIME associations** (`mimeapps.list` → `~/.config/`)
 9. **Installs portal configs** (`xdg-desktop-portal/*.conf` → `~/.config/xdg-desktop-portal/`)
-10. **Fixes hardcoded paths** — replaces `__HOME__` with actual `$HOME` in all config files
+10. **Renders home paths** in copied configs without changing the repository
 11. **Sets Fish as default shell**
 12. **Enables SDDM** display manager
 13. **Sets executable permissions** on all scripts

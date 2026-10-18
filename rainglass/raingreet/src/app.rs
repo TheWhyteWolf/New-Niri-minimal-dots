@@ -18,10 +18,15 @@ use crate::secure_buf::SecureBuf;
 use crate::sessions::Sessions;
 use crate::state::{Greeter, Phase, IDLE_COLLAPSE_SECS, USERNAME_MAX};
 use rainglass::{
-    buffer_px, text, Background, Band, Font, Frame, Gpu, Impact, Line, Plate, Rain, ScaleHandler, Scaling, Source,
-    SurfaceScale, Target, IMPACTS,
+    buffer_px, text, Background, Band, Font, Frame, Gpu, Impact, Line, Plate, Rain, ScaleHandler,
+    Scaling, Source, SurfaceScale, Target, IMPACTS,
 };
 
+use smithay_client_toolkit::reexports::client::{
+    globals::registry_queue_init,
+    protocol::{wl_keyboard, wl_output, wl_seat, wl_shm, wl_surface},
+    Connection, Proxy, QueueHandle,
+};
 use smithay_client_toolkit::{
     compositor::{CompositorHandler, CompositorState},
     output::{OutputHandler, OutputState},
@@ -47,11 +52,6 @@ use smithay_client_toolkit::{
         WaylandSurface,
     },
     shm::{slot::SlotPool, Shm, ShmHandler},
-};
-use smithay_client_toolkit::reexports::client::{
-    globals::registry_queue_init,
-    protocol::{wl_keyboard, wl_output, wl_seat, wl_shm, wl_surface},
-    Connection, Proxy, QueueHandle,
 };
 use std::time::{Duration, Instant};
 use zeroize::Zeroize;
@@ -188,7 +188,11 @@ pub fn run(cfg: Cfg, ipc: Ipc, ipc_events: Channel<IpcEvent>) -> i32 {
             None
         }
     };
-    let rain = gpu.as_ref().and_then(|g| Rain::new(g).map_err(|e| eprintln!("raingreet: rain shader: {e}")).ok());
+    let rain = gpu.as_ref().and_then(|g| {
+        Rain::new(g)
+            .map_err(|e| eprintln!("raingreet: rain shader: {e}"))
+            .ok()
+    });
     let gpu = if rain.is_some() { gpu } else { None };
 
     let mut sessions = Sessions::load(&cfg.sessions_dirs, &cfg.cmd);
@@ -271,12 +275,14 @@ pub fn run(cfg: Cfg, ipc: Ipc, ipc_events: Channel<IpcEvent>) -> i32 {
     // until it's ready.
     let (tx, rx) = channel::channel::<Source>();
     let path = app.cfg.image.clone();
-    std::thread::spawn(move || match rainglass::load_source(&path, SOURCE_MAX.0, SOURCE_MAX.1) {
-        Ok(src) => {
-            let _ = tx.send(src);
-        }
-        Err(e) => eprintln!("raingreet: wallpaper {e}; showing a plain colour"),
-    });
+    std::thread::spawn(
+        move || match rainglass::load_source(&path, SOURCE_MAX.0, SOURCE_MAX.1) {
+            Ok(src) => {
+                let _ = tx.send(src);
+            }
+            Err(e) => eprintln!("raingreet: wallpaper {e}; showing a plain colour"),
+        },
+    );
     app.loop_handle
         .insert_source(rx, |event, _, app: &mut App| {
             if let ChannelEvent::Msg(src) = event {
@@ -297,10 +303,15 @@ pub fn run(cfg: Cfg, ipc: Ipc, ipc_events: Channel<IpcEvent>) -> i32 {
         })
         .expect("insert frame timer");
 
-    WaylandSource::new(conn, event_queue).insert(app.loop_handle.clone()).expect("insert wayland source");
+    WaylandSource::new(conn, event_queue)
+        .insert(app.loop_handle.clone())
+        .expect("insert wayland source");
 
     while !app.exit {
-        if event_loop.dispatch(Duration::from_millis(100), &mut app).is_err() {
+        if event_loop
+            .dispatch(Duration::from_millis(100), &mut app)
+            .is_err()
+        {
             break;
         }
     }
@@ -322,7 +333,9 @@ fn clock_hhmm() -> String {
 /// Local date "SUN 18 OCT".
 fn clock_date() -> String {
     const DAYS: [&str; 7] = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
-    const MONTHS: [&str; 12] = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+    const MONTHS: [&str; 12] = [
+        "JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC",
+    ];
     unsafe {
         let now = libc::time(std::ptr::null_mut());
         let mut tm: libc::tm = std::mem::zeroed();
@@ -339,7 +352,11 @@ fn clock_date() -> String {
 type Spec = (String, f32, [u8; 3], f32);
 
 fn key_of(lines: &[Spec]) -> String {
-    lines.iter().map(|(t, s, c, a)| format!("{t}\u{1}{s}\u{1}{c:?}\u{1}{a}")).collect::<Vec<_>>().join("\u{2}")
+    lines
+        .iter()
+        .map(|(t, s, c, a)| format!("{t}\u{1}{s}\u{1}{c:?}\u{1}{a}"))
+        .collect::<Vec<_>>()
+        .join("\u{2}")
 }
 
 impl App {
@@ -360,7 +377,12 @@ impl App {
 
     fn splash(&mut self) {
         let (x, y) = (0.08 + 0.84 * self.rand(), 0.08 + 0.84 * self.rand());
-        self.impacts[self.next_impact] = Impact { x, y, landed: self.rain_t as f32, wiped: -1.0 };
+        self.impacts[self.next_impact] = Impact {
+            x,
+            y,
+            landed: self.rain_t as f32,
+            wiped: -1.0,
+        };
         self.next_impact = (self.next_impact + 1) % IMPACTS;
     }
 
@@ -375,7 +397,11 @@ impl App {
 
     fn wipe_all(&mut self) {
         let now = self.rain_t as f32;
-        for i in self.impacts.iter_mut().filter(|i| i.landed >= 0.0 && i.wiped < 0.0) {
+        for i in self
+            .impacts
+            .iter_mut()
+            .filter(|i| i.landed >= 0.0 && i.wiped < 0.0)
+        {
             i.wiped = now;
         }
     }
@@ -403,17 +429,35 @@ impl App {
                 Phase::Growing { .. } | Phase::EnterPassword if self.caps_lock => {
                     ("caps lock is on".into(), 0.17, urgent, 0.95)
                 }
-                Phase::Growing { .. } | Phase::EnterPassword => {
-                    ("password".into(), 0.17, text, 0.5 * self.greeter.cube_scale(t) as f32)
-                }
+                Phase::Growing { .. } | Phase::EnterPassword => (
+                    "password".into(),
+                    0.17,
+                    text,
+                    0.5 * self.greeter.cube_scale(t) as f32,
+                ),
                 Phase::Validating => ("checking…".into(), 0.17, text, 0.8),
-                Phase::Failed { .. } => (info.unwrap_or_else(|| "wrong password".into()), 0.17, urgent, 0.95),
+                Phase::Failed { .. } => (
+                    info.unwrap_or_else(|| "wrong password".into()),
+                    0.17,
+                    urgent,
+                    0.95,
+                ),
                 Phase::Collapsing { .. } => (String::new(), 0.17, text, 0.0),
-                Phase::Starting => (format!("starting {}", self.sessions.current().name), 0.17, text, 0.8),
+                Phase::Starting => (
+                    format!("starting {}", self.sessions.current().name),
+                    0.17,
+                    text,
+                    0.8,
+                ),
             }
         };
         let session: Spec = if self.sessions.len() > 1 && self.greeter.phase != Phase::Starting {
-            (format!("F2  {}", self.sessions.current().name), 0.15, text, 0.55)
+            (
+                format!("F2  {}", self.sessions.current().name),
+                0.15,
+                text,
+                0.55,
+            )
         } else {
             (String::new(), 0.15, text, 0.0)
         };
@@ -430,9 +474,22 @@ impl App {
         let font = self.font.as_ref()?;
         let s = bh as f32 / self.height.max(1) as f32;
         let clock = self.cfg.clock_px * s;
-        let lines: Vec<Line> =
-            lines.iter().map(|(text, rel, rgb, alpha)| Line { text: text.clone(), px: clock * rel, rgb: *rgb, alpha: *alpha }).collect();
-        text::band(font, &lines, bw as usize, (bh as f32 * 0.28) as i32, (clock * 0.14) as usize)
+        let lines: Vec<Line> = lines
+            .iter()
+            .map(|(text, rel, rgb, alpha)| Line {
+                text: text.clone(),
+                px: clock * rel,
+                rgb: *rgb,
+                alpha: *alpha,
+            })
+            .collect();
+        text::band(
+            font,
+            &lines,
+            bw as usize,
+            (bh as f32 * 0.28) as i32,
+            (clock * 0.14) as usize,
+        )
     }
 
     fn glass(&self, t: f64) -> Frame {
@@ -447,7 +504,12 @@ impl App {
             let p = ((t - at) / WRONG_FLASH) as f32;
             if p < 1.0 {
                 let u = self.cfg.urgent;
-                f.tint = [u[0] as f32 / 255.0, u[1] as f32 / 255.0, u[2] as f32 / 255.0, 0.3 * (1.0 - p) * (1.0 - p)];
+                f.tint = [
+                    u[0] as f32 / 255.0,
+                    u[1] as f32 / 255.0,
+                    u[2] as f32 / 255.0,
+                    0.3 * (1.0 - p) * (1.0 - p),
+                ];
             }
         }
         if let Some(at) = self.started_at {
@@ -460,7 +522,10 @@ impl App {
 
     fn buffer_size(&self) -> (u32, u32) {
         if self.scale.fractional() {
-            (buffer_px(self.width, self.scale120), buffer_px(self.height, self.scale120))
+            (
+                buffer_px(self.width, self.scale120),
+                buffer_px(self.height, self.scale120),
+            )
         } else {
             let s = (self.scale120 / 120).max(1);
             (self.width * s, self.height * s)
@@ -498,7 +563,9 @@ impl App {
 
         // Back at the username prompt after a failure: offer the remembered
         // user again rather than an empty box.
-        if self.greeter.phase == Phase::EnterUser && matches!(self.last_phase, Phase::Collapsing { .. }) {
+        if self.greeter.phase == Phase::EnterUser
+            && matches!(self.last_phase, Phase::Collapsing { .. })
+        {
             if let Some(u) = &self.remembered_user {
                 self.greeter.username = u.clone();
             }
@@ -507,7 +574,10 @@ impl App {
 
         // Idle at the password prompt with nothing typed: back to the
         // username prompt.
-        if self.greeter.phase == Phase::EnterPassword && self.password.is_empty() && t - self.last_key_t > IDLE_COLLAPSE_SECS {
+        if self.greeter.phase == Phase::EnterPassword
+            && self.password.is_empty()
+            && t - self.last_key_t > IDLE_COLLAPSE_SECS
+        {
             self.greeter.cancel_to_user(t);
             self.ipc.send(IpcCmd::Cancel);
         }
@@ -520,7 +590,11 @@ impl App {
         let now = Instant::now();
         let dt = now.duration_since(self.last_tick).as_secs_f64().min(0.25);
         self.last_tick = now;
-        let target = if self.greeter.phase == Phase::Validating { 0.15 } else { 1.0 };
+        let target = if self.greeter.phase == Phase::Validating {
+            0.15
+        } else {
+            1.0
+        };
         self.speed += (target - self.speed) * (dt * 4.0).min(1.0);
         if !self.cfg.still {
             self.rain_t += dt * self.speed;
@@ -536,7 +610,9 @@ impl App {
             return; // nothing a still frame shows has changed
         }
         if self.frame_pending {
-            let stuck = self.frame_pending_since.is_some_and(|since| since.elapsed() >= FRAME_WATCHDOG);
+            let stuck = self
+                .frame_pending_since
+                .is_some_and(|since| since.elapsed() >= FRAME_WATCHDOG);
             if !stuck {
                 return;
             }
@@ -559,7 +635,10 @@ impl App {
             self.paint_cpu(lines, key);
         }
         if let Some(t0) = t0 {
-            eprintln!("raingreet: frame {:.2}ms", t0.elapsed().as_secs_f64() * 1000.0);
+            eprintln!(
+                "raingreet: frame {:.2}ms",
+                t0.elapsed().as_secs_f64() * 1000.0
+            );
         }
     }
 
@@ -569,7 +648,11 @@ impl App {
         if self.target.is_none() {
             self.prepare_surface();
             let gpu = self.gpu.as_ref().unwrap();
-            match gpu.target(self.window.wl_surface().id().as_ptr().cast(), bw as i32, bh as i32) {
+            match gpu.target(
+                self.window.wl_surface().id().as_ptr().cast(),
+                bw as i32,
+                bh as i32,
+            ) {
                 Ok(tg) => self.target = Some(tg),
                 Err(e) => {
                     eprintln!("raingreet: {e}; drawing on the CPU");
@@ -581,7 +664,9 @@ impl App {
         let want_wallpaper = self.source.is_some();
         let rebuild = self.plate.is_none() || (want_wallpaper && !self.has_wallpaper);
         let band = (rebuild || self.text_key != key).then(|| self.band(lines, bw, bh));
-        let (Some(gpu), Some(rain)) = (self.gpu.as_ref(), self.rain.as_ref()) else { return false };
+        let (Some(gpu), Some(rain)) = (self.gpu.as_ref(), self.rain.as_ref()) else {
+            return false;
+        };
         if let Err(e) = gpu.bind(self.target.as_ref().unwrap()) {
             eprintln!("raingreet: {e}");
             self.cpu = true;
@@ -655,7 +740,14 @@ impl App {
         let pool = self.pool.as_mut().unwrap();
         match pool.create_buffer(bw as i32, bh as i32, stride, wl_shm::Format::Xrgb8888) {
             Ok((buffer, canvas)) => {
-                rainglass::still::paint(canvas, bw as usize, bh as usize, self.cpu_bg.as_ref().unwrap(), band.as_ref(), self.cfg.dim);
+                rainglass::still::paint(
+                    canvas,
+                    bw as usize,
+                    bh as usize,
+                    self.cpu_bg.as_ref().unwrap(),
+                    band.as_ref(),
+                    self.cfg.dim,
+                );
                 let surface = self.window.wl_surface();
                 surface.frame(&self.qh, surface.clone());
                 buffer.attach_to(surface).expect("attach");
@@ -682,7 +774,9 @@ impl App {
         // Global: Ctrl+Alt+Del reboots (the greeter user may command the
         // active seat via logind, as tuigreet's power option does).
         if ctrl && self.mods.alt && matches!(event.keysym, Keysym::Delete | Keysym::KP_Delete) {
-            let _ = std::process::Command::new("systemctl").arg("reboot").spawn();
+            let _ = std::process::Command::new("systemctl")
+                .arg("reboot")
+                .spawn();
             return;
         }
 
@@ -700,7 +794,9 @@ impl App {
             Keysym::F2 | Keysym::F3 => self.sessions.cycle(),
             Keysym::Return | Keysym::KP_Enter => {
                 if self.greeter.user_submit(t) {
-                    self.ipc.send(IpcCmd::CreateSession { username: self.greeter.username.trim().to_string() });
+                    self.ipc.send(IpcCmd::CreateSession {
+                        username: self.greeter.username.trim().to_string(),
+                    });
                 }
             }
             Keysym::BackSpace => {
@@ -716,7 +812,9 @@ impl App {
                 if ctrl {
                     return;
                 }
-                let Some(s) = event.utf8.as_deref() else { return };
+                let Some(s) = event.utf8.as_deref() else {
+                    return;
+                };
                 for c in s.chars() {
                     if !c.is_control() && self.greeter.username.chars().count() < USERNAME_MAX {
                         self.greeter.username.push(c);
@@ -798,14 +896,20 @@ impl App {
             IpcEvent::Info(m) => self.info = Some((m, t)),
             IpcEvent::AuthOk => {
                 if self.greeter.on_auth_ok() {
-                    cli::remember(&self.cfg.remember, self.greeter.username.trim(), &self.sessions.current().name);
+                    cli::remember(
+                        &self.cfg.remember,
+                        self.greeter.username.trim(),
+                        &self.sessions.current().name,
+                    );
                     self.started_at = Some(t);
                     // systemd-cat: greetd gives the session vt1 as stdio, so
                     // its startup chatter would sit in the VT text buffer and
                     // flash as terminal text during the KMS handoff. Journal
                     // instead: journalctl -t greetd-session
-                    let mut cmd: Vec<String> =
-                        ["systemd-cat", "-t", "greetd-session", "--"].iter().map(|s| s.to_string()).collect();
+                    let mut cmd: Vec<String> = ["systemd-cat", "-t", "greetd-session", "--"]
+                        .iter()
+                        .map(|s| s.to_string())
+                        .collect();
                     cmd.extend(self.sessions.current().cmd.iter().cloned());
                     self.ipc.send(IpcCmd::StartSession { cmd });
                 }
@@ -851,9 +955,24 @@ impl WindowHandler for App {
         self.exit = true;
     }
 
-    fn configure(&mut self, _conn: &Connection, _qh: &QueueHandle<Self>, _window: &Window, configure: WindowConfigure, _serial: u32) {
-        let w = configure.new_size.0.map(|v| v.get()).unwrap_or(FALLBACK_SIZE.0);
-        let h = configure.new_size.1.map(|v| v.get()).unwrap_or(FALLBACK_SIZE.1);
+    fn configure(
+        &mut self,
+        _conn: &Connection,
+        _qh: &QueueHandle<Self>,
+        _window: &Window,
+        configure: WindowConfigure,
+        _serial: u32,
+    ) {
+        let w = configure
+            .new_size
+            .0
+            .map(|v| v.get())
+            .unwrap_or(FALLBACK_SIZE.0);
+        let h = configure
+            .new_size
+            .1
+            .map(|v| v.get())
+            .unwrap_or(FALLBACK_SIZE.1);
         if w != self.width || h != self.height {
             self.reset_surface();
             self.width = w;
@@ -881,15 +1000,34 @@ impl ScaleHandler for App {
 }
 
 impl CompositorHandler for App {
-    fn scale_factor_changed(&mut self, _: &Connection, _: &QueueHandle<Self>, _: &wl_surface::WlSurface, factor: i32) {
+    fn scale_factor_changed(
+        &mut self,
+        _: &Connection,
+        _: &QueueHandle<Self>,
+        _: &wl_surface::WlSurface,
+        factor: i32,
+    ) {
         let s120 = factor.max(1) as u32 * 120;
         if !self.scale.fractional() && self.scale120 != s120 {
             self.reset_surface();
             self.scale120 = s120;
         }
     }
-    fn transform_changed(&mut self, _: &Connection, _: &QueueHandle<Self>, _: &wl_surface::WlSurface, _: wl_output::Transform) {}
-    fn frame(&mut self, _: &Connection, _: &QueueHandle<Self>, surface: &wl_surface::WlSurface, _: u32) {
+    fn transform_changed(
+        &mut self,
+        _: &Connection,
+        _: &QueueHandle<Self>,
+        _: &wl_surface::WlSurface,
+        _: wl_output::Transform,
+    ) {
+    }
+    fn frame(
+        &mut self,
+        _: &Connection,
+        _: &QueueHandle<Self>,
+        surface: &wl_surface::WlSurface,
+        _: u32,
+    ) {
         if surface == self.window.wl_surface() {
             if self.watchdog_tripped {
                 self.watchdog_tripped = false;
@@ -899,8 +1037,22 @@ impl CompositorHandler for App {
             self.frame_pending_since = None;
         }
     }
-    fn surface_enter(&mut self, _: &Connection, _: &QueueHandle<Self>, _: &wl_surface::WlSurface, _: &wl_output::WlOutput) {}
-    fn surface_leave(&mut self, _: &Connection, _: &QueueHandle<Self>, _: &wl_surface::WlSurface, _: &wl_output::WlOutput) {}
+    fn surface_enter(
+        &mut self,
+        _: &Connection,
+        _: &QueueHandle<Self>,
+        _: &wl_surface::WlSurface,
+        _: &wl_output::WlOutput,
+    ) {
+    }
+    fn surface_leave(
+        &mut self,
+        _: &Connection,
+        _: &QueueHandle<Self>,
+        _: &wl_surface::WlSurface,
+        _: &wl_output::WlOutput,
+    ) {
+    }
 }
 
 impl OutputHandler for App {
@@ -918,7 +1070,13 @@ impl SeatHandler for App {
     }
     fn new_seat(&mut self, _: &Connection, _: &QueueHandle<Self>, _: wl_seat::WlSeat) {}
 
-    fn new_capability(&mut self, _conn: &Connection, qh: &QueueHandle<Self>, seat: wl_seat::WlSeat, capability: Capability) {
+    fn new_capability(
+        &mut self,
+        _conn: &Connection,
+        qh: &QueueHandle<Self>,
+        seat: wl_seat::WlSeat,
+        capability: Capability,
+    ) {
         if capability == Capability::Keyboard && self.keyboard.is_none() {
             match self.seat_state.get_keyboard_with_repeat(
                 qh,
@@ -933,7 +1091,13 @@ impl SeatHandler for App {
         }
     }
 
-    fn remove_capability(&mut self, _: &Connection, _: &QueueHandle<Self>, _: wl_seat::WlSeat, capability: Capability) {
+    fn remove_capability(
+        &mut self,
+        _: &Connection,
+        _: &QueueHandle<Self>,
+        _: wl_seat::WlSeat,
+        capability: Capability,
+    ) {
         if capability == Capability::Keyboard {
             if let Some(kbd) = self.keyboard.take() {
                 kbd.release();
@@ -944,18 +1108,67 @@ impl SeatHandler for App {
 }
 
 impl KeyboardHandler for App {
-    fn enter(&mut self, _: &Connection, _: &QueueHandle<Self>, _: &wl_keyboard::WlKeyboard, _: &wl_surface::WlSurface, _: u32, _: &[u32], _: &[Keysym]) {}
-    fn leave(&mut self, _: &Connection, _: &QueueHandle<Self>, _: &wl_keyboard::WlKeyboard, _: &wl_surface::WlSurface, _: u32) {}
-    fn press_key(&mut self, _: &Connection, _: &QueueHandle<Self>, _: &wl_keyboard::WlKeyboard, _: u32, event: KeyEvent) {
+    fn enter(
+        &mut self,
+        _: &Connection,
+        _: &QueueHandle<Self>,
+        _: &wl_keyboard::WlKeyboard,
+        _: &wl_surface::WlSurface,
+        _: u32,
+        _: &[u32],
+        _: &[Keysym],
+    ) {
+    }
+    fn leave(
+        &mut self,
+        _: &Connection,
+        _: &QueueHandle<Self>,
+        _: &wl_keyboard::WlKeyboard,
+        _: &wl_surface::WlSurface,
+        _: u32,
+    ) {
+    }
+    fn press_key(
+        &mut self,
+        _: &Connection,
+        _: &QueueHandle<Self>,
+        _: &wl_keyboard::WlKeyboard,
+        _: u32,
+        event: KeyEvent,
+    ) {
         self.on_key(event);
     }
-    fn repeat_key(&mut self, _: &Connection, _: &QueueHandle<Self>, _: &wl_keyboard::WlKeyboard, _: u32, _: KeyEvent) {
+    fn repeat_key(
+        &mut self,
+        _: &Connection,
+        _: &QueueHandle<Self>,
+        _: &wl_keyboard::WlKeyboard,
+        _: u32,
+        _: KeyEvent,
+    ) {
         // Compositor-driven (wl_keyboard v10) repeats — no-op. Repeat is driven
         // by the get_keyboard_with_repeat calloop callback, so handling this
         // too would double-type on v10 compositors.
     }
-    fn release_key(&mut self, _: &Connection, _: &QueueHandle<Self>, _: &wl_keyboard::WlKeyboard, _: u32, _: KeyEvent) {}
-    fn update_modifiers(&mut self, _: &Connection, _: &QueueHandle<Self>, _: &wl_keyboard::WlKeyboard, _: u32, modifiers: Modifiers, _: RawModifiers, _: u32) {
+    fn release_key(
+        &mut self,
+        _: &Connection,
+        _: &QueueHandle<Self>,
+        _: &wl_keyboard::WlKeyboard,
+        _: u32,
+        _: KeyEvent,
+    ) {
+    }
+    fn update_modifiers(
+        &mut self,
+        _: &Connection,
+        _: &QueueHandle<Self>,
+        _: &wl_keyboard::WlKeyboard,
+        _: u32,
+        modifiers: Modifiers,
+        _: RawModifiers,
+        _: u32,
+    ) {
         self.mods = modifiers;
         self.caps_lock = modifiers.caps_lock;
     }

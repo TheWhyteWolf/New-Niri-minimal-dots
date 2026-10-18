@@ -8,7 +8,14 @@ use crate::{Background, Band};
 
 /// Fill `canvas` (XRGB8888, `w`x`h`, little-endian B,G,R,X) with the frosted
 /// background stretched to fit, dimmed, with `band` composited over it.
-pub fn paint(canvas: &mut [u8], w: usize, h: usize, bg: &Background, band: Option<&Band>, dim: f32) {
+pub fn paint(
+    canvas: &mut [u8],
+    w: usize,
+    h: usize,
+    bg: &Background,
+    band: Option<&Band>,
+    dim: f32,
+) {
     let (fw, fh) = (bg.frost_w, bg.frost_h);
     let axis = |i: usize, n: usize, src: usize| {
         let f = ((i as f32 + 0.5) * src as f32 / n as f32 - 0.5).clamp(0.0, (src - 1) as f32);

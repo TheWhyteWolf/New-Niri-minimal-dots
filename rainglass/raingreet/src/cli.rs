@@ -39,7 +39,10 @@ impl Default for Cfg {
             urgent: [224, 108, 117],
             still: false,
             debug_timing: false,
-            sessions_dirs: vec!["/usr/local/share/wayland-sessions".into(), "/usr/share/wayland-sessions".into()],
+            sessions_dirs: vec![
+                "/usr/local/share/wayland-sessions".into(),
+                "/usr/share/wayland-sessions".into(),
+            ],
             cmd: vec!["niri-session".into()],
             remember: "/var/cache/raingreet/last".into(),
         }
@@ -101,7 +104,13 @@ fn set(cfg: &mut Cfg, key: &str, val: &str) -> bool {
         "clock-px" | "clock_px" => cfg.clock_px = num(val).map_or(cfg.clock_px, |v| v as f32),
         "text" => cfg.text = parse_hex(val).unwrap_or(cfg.text),
         "urgent" => cfg.urgent = parse_hex(val).unwrap_or(cfg.urgent),
-        "sessions" => cfg.sessions_dirs = val.split(':').filter(|s| !s.is_empty()).map(str::to_string).collect(),
+        "sessions" => {
+            cfg.sessions_dirs = val
+                .split(':')
+                .filter(|s| !s.is_empty())
+                .map(str::to_string)
+                .collect()
+        }
         "cmd" => {
             let cmd: Vec<String> = val.split_whitespace().map(str::to_string).collect();
             if !cmd.is_empty() {
@@ -115,10 +124,14 @@ fn set(cfg: &mut Cfg, key: &str, val: &str) -> bool {
 }
 
 fn load_file(cfg: &mut Cfg, path: &str) {
-    let Ok(body) = std::fs::read_to_string(path) else { return };
+    let Ok(body) = std::fs::read_to_string(path) else {
+        return;
+    };
     for raw in body.lines() {
         let line = strip_comment(raw).trim();
-        let Some((k, v)) = line.split_once('=') else { continue };
+        let Some((k, v)) = line.split_once('=') else {
+            continue;
+        };
         if !set(cfg, k.trim(), v) {
             eprintln!("raingreet: {path}: unknown key {:?} (ignored)", k.trim());
         }
@@ -183,7 +196,10 @@ pub fn remember(path: &str, user: &str, session: &str) {
         return;
     }
     let clean = |s: &str| s.replace(['\n', '\r'], " ");
-    if let Err(e) = std::fs::write(path, format!("user={}\nsession={}\n", clean(user), clean(session))) {
+    if let Err(e) = std::fs::write(
+        path,
+        format!("user={}\nsession={}\n", clean(user), clean(session)),
+    ) {
         eprintln!("raingreet: can't remember the last login in {path}: {e}");
     }
 }
@@ -195,7 +211,11 @@ mod tests {
     #[test]
     fn config_file_keys_load() {
         let path = std::env::temp_dir().join(format!("raingreet-cli-test-{}", std::process::id()));
-        std::fs::write(&path, "density=0.4  # light\nsessions=/a:/b\nimage=/x.jpg\nnope=1\n").unwrap();
+        std::fs::write(
+            &path,
+            "density=0.4  # light\nsessions=/a:/b\nimage=/x.jpg\nnope=1\n",
+        )
+        .unwrap();
         let mut cfg = Cfg::default();
         load_file(&mut cfg, path.to_str().unwrap());
         let _ = std::fs::remove_file(&path);

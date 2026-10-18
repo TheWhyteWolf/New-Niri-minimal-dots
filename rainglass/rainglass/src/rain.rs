@@ -26,7 +26,12 @@ pub struct Impact {
 }
 
 impl Impact {
-    pub const NONE: Impact = Impact { x: 0.0, y: 0.0, landed: -1.0, wiped: -1.0 };
+    pub const NONE: Impact = Impact {
+        x: 0.0,
+        y: 0.0,
+        landed: -1.0,
+        wiped: -1.0,
+    };
 }
 
 /// Everything about one frame that changes over time.
@@ -108,7 +113,9 @@ impl Plate {
 
 impl Rain {
     pub fn new(gpu: &Gpu) -> Result<Rain, String> {
-        Ok(Rain { program: gpu.program(FRAG)? })
+        Ok(Rain {
+            program: gpu.program(FRAG)?,
+        })
     }
 
     /// Draw one frame of `plate` into whatever is bound.
@@ -133,10 +140,20 @@ impl Rain {
             gl.uniform_1_f32(u("u_dim").as_ref(), f.dim);
             gl.uniform_1_f32(u("u_vignette").as_ref(), f.vignette);
             gl.uniform_4_f32_slice(u("u_tint").as_ref(), &f.tint);
-            let flat: Vec<f32> = f.impacts.iter().flat_map(|i| [i.x, i.y, i.landed, i.wiped]).collect();
+            let flat: Vec<f32> = f
+                .impacts
+                .iter()
+                .flat_map(|i| [i.x, i.y, i.landed, i.wiped])
+                .collect();
             gl.uniform_4_f32_slice(u("u_impact").as_ref(), &flat);
-            gl.uniform_1_f32(u("u_has_text").as_ref(), if plate.text.is_some() { 1.0 } else { 0.0 });
-            gl.uniform_4_f32_slice(u("u_text_rect").as_ref(), &plate.text.map_or([0.0, 0.0, 1.0, 1.0], |t| t.1));
+            gl.uniform_1_f32(
+                u("u_has_text").as_ref(),
+                if plate.text.is_some() { 1.0 } else { 0.0 },
+            );
+            gl.uniform_4_f32_slice(
+                u("u_text_rect").as_ref(),
+                &plate.text.map_or([0.0, 0.0, 1.0, 1.0], |t| t.1),
+            );
         }
         gpu.draw_quad(plate.w, plate.h);
     }

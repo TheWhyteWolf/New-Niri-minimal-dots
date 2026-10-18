@@ -43,7 +43,10 @@ impl Scaling {
     where
         D: Dispatch<WpFractionalScaleManagerV1, ()> + Dispatch<WpViewporter, ()> + 'static,
     {
-        Scaling { manager: globals.bind(qh, 1..=1, ()).ok(), viewporter: globals.bind(qh, 1..=1, ()).ok() }
+        Scaling {
+            manager: globals.bind(qh, 1..=1, ()).ok(),
+            viewporter: globals.bind(qh, 1..=1, ()).ok(),
+        }
     }
 
     pub fn attach<D>(&self, surface: &WlSurface, qh: &QueueHandle<D>) -> SurfaceScale
@@ -55,7 +58,10 @@ impl Scaling {
                 fractional: Some(m.get_fractional_scale(surface, qh, surface.clone())),
                 viewport: Some(v.get_viewport(surface, qh, ())),
             },
-            _ => SurfaceScale { fractional: None, viewport: None },
+            _ => SurfaceScale {
+                fractional: None,
+                viewport: None,
+            },
         }
     }
 }
@@ -114,21 +120,45 @@ impl<D> Dispatch<WpFractionalScaleManagerV1, (), D> for Scaling
 where
     D: Dispatch<WpFractionalScaleManagerV1, ()>,
 {
-    fn event(_: &mut D, _: &WpFractionalScaleManagerV1, _: <WpFractionalScaleManagerV1 as smithay_client_toolkit::reexports::client::Proxy>::Event, _: &(), _: &Connection, _: &QueueHandle<D>) {}
+    fn event(
+        _: &mut D,
+        _: &WpFractionalScaleManagerV1,
+        _: <WpFractionalScaleManagerV1 as smithay_client_toolkit::reexports::client::Proxy>::Event,
+        _: &(),
+        _: &Connection,
+        _: &QueueHandle<D>,
+    ) {
+    }
 }
 
 impl<D> Dispatch<WpViewporter, (), D> for Scaling
 where
     D: Dispatch<WpViewporter, ()>,
 {
-    fn event(_: &mut D, _: &WpViewporter, _: <WpViewporter as smithay_client_toolkit::reexports::client::Proxy>::Event, _: &(), _: &Connection, _: &QueueHandle<D>) {}
+    fn event(
+        _: &mut D,
+        _: &WpViewporter,
+        _: <WpViewporter as smithay_client_toolkit::reexports::client::Proxy>::Event,
+        _: &(),
+        _: &Connection,
+        _: &QueueHandle<D>,
+    ) {
+    }
 }
 
 impl<D> Dispatch<WpViewport, (), D> for Scaling
 where
     D: Dispatch<WpViewport, ()>,
 {
-    fn event(_: &mut D, _: &WpViewport, _: <WpViewport as smithay_client_toolkit::reexports::client::Proxy>::Event, _: &(), _: &Connection, _: &QueueHandle<D>) {}
+    fn event(
+        _: &mut D,
+        _: &WpViewport,
+        _: <WpViewport as smithay_client_toolkit::reexports::client::Proxy>::Event,
+        _: &(),
+        _: &Connection,
+        _: &QueueHandle<D>,
+    ) {
+    }
 }
 
 /// Route the four protocol objects' events for `$app` through [`Scaling`].

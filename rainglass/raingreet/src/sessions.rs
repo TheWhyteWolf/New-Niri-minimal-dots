@@ -57,7 +57,11 @@ impl Sessions {
 
         let idx = entries
             .iter()
-            .position(|e| e.cmd.iter().any(|w| w == "niri-session" || w.ends_with("/niri-session")))
+            .position(|e| {
+                e.cmd
+                    .iter()
+                    .any(|w| w == "niri-session" || w.ends_with("/niri-session"))
+            })
             .unwrap_or(0);
         Sessions { entries, idx }
     }
@@ -117,7 +121,10 @@ fn parse_desktop(text: &str) -> Option<SessionEntry> {
     if cmd.is_empty() {
         return None;
     }
-    Some(SessionEntry { name: name.unwrap_or_else(|| cmd[0].clone()), cmd })
+    Some(SessionEntry {
+        name: name.unwrap_or_else(|| cmd[0].clone()),
+        cmd,
+    })
 }
 
 /// Split an Exec= value into argv per the Desktop Entry spec: arguments are
@@ -182,7 +189,8 @@ mod tests {
     fn hidden_and_actions_sections_skipped() {
         let hidden = "[Desktop Entry]\nName=X\nExec=x\nHidden=true\n";
         assert!(parse_desktop(hidden).is_none());
-        let with_action = "[Desktop Entry]\nName=Y\nExec=y %U\n[Desktop Action new]\nName=Z\nExec=z\n";
+        let with_action =
+            "[Desktop Entry]\nName=Y\nExec=y %U\n[Desktop Action new]\nName=Z\nExec=z\n";
         let e = parse_desktop(with_action).unwrap();
         assert_eq!(e.name, "Y");
         assert_eq!(e.cmd, vec!["y"]); // %U stripped, action Exec ignored
@@ -211,8 +219,16 @@ mod tests {
     fn load_real_dir_and_cycle() {
         let dir = std::env::temp_dir().join(format!("raingreet-sessions-{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
-        std::fs::write(dir.join("a-plasma.desktop"), "[Desktop Entry]\nName=Plasma\nExec=startplasma-wayland\n").unwrap();
-        std::fs::write(dir.join("niri.desktop"), "[Desktop Entry]\nName=Niri\nExec=niri-session\n").unwrap();
+        std::fs::write(
+            dir.join("a-plasma.desktop"),
+            "[Desktop Entry]\nName=Plasma\nExec=startplasma-wayland\n",
+        )
+        .unwrap();
+        std::fs::write(
+            dir.join("niri.desktop"),
+            "[Desktop Entry]\nName=Niri\nExec=niri-session\n",
+        )
+        .unwrap();
         std::fs::write(dir.join("notes.txt"), "not a desktop file").unwrap();
         let fallback = vec!["fallback".to_string()];
         let mut s = Sessions::load(&[dir.to_str().unwrap().to_string()], &fallback);
@@ -227,21 +243,45 @@ mod tests {
 
     #[test]
     fn local_dir_adds_sessions_and_overrides_by_file_name() {
-        let base = std::env::temp_dir().join(format!("raingreet-sessions-two-{}", std::process::id()));
+        let base =
+            std::env::temp_dir().join(format!("raingreet-sessions-two-{}", std::process::id()));
         let (local, system) = (base.join("local"), base.join("system"));
         std::fs::create_dir_all(&local).unwrap();
         std::fs::create_dir_all(&system).unwrap();
-        std::fs::write(system.join("niri.desktop"), "[Desktop Entry]\nName=Niri\nExec=niri-session\n").unwrap();
-        std::fs::write(local.join("lifebranch.desktop"), "[Desktop Entry]\nName=LifeBranch\nExec=/usr/local/bin/lifebranch-session\n").unwrap();
-        std::fs::write(local.join("niri.desktop"), "[Desktop Entry]\nName=Niri (local)\nExec=niri-session\n").unwrap();
-        let dirs = [local.to_str().unwrap().to_string(), system.to_str().unwrap().to_string()];
+        std::fs::write(
+            system.join("niri.desktop"),
+            "[Desktop Entry]\nName=Niri\nExec=niri-session\n",
+        )
+        .unwrap();
+        std::fs::write(
+            local.join("lifebranch.desktop"),
+            "[Desktop Entry]\nName=LifeBranch\nExec=/usr/local/bin/lifebranch-session\n",
+        )
+        .unwrap();
+        std::fs::write(
+            local.join("niri.desktop"),
+            "[Desktop Entry]\nName=Niri (local)\nExec=niri-session\n",
+        )
+        .unwrap();
+        let dirs = [
+            local.to_str().unwrap().to_string(),
+            system.to_str().unwrap().to_string(),
+        ];
         let mut s = Sessions::load(&dirs, &["fallback".to_string()]);
         std::fs::remove_dir_all(&base).ok();
-        assert_eq!(s.len(), 2, "the system niri.desktop is overridden, not listed twice");
+        assert_eq!(
+            s.len(),
+            2,
+            "the system niri.desktop is overridden, not listed twice"
+        );
         assert_eq!(s.current().name, "Niri (local)");
         s.select("LifeBranch");
         assert_eq!(s.current().cmd, vec!["/usr/local/bin/lifebranch-session"]);
         s.select("no such session");
-        assert_eq!(s.current().name, "LifeBranch", "an unknown name keeps the selection");
+        assert_eq!(
+            s.current().name,
+            "LifeBranch",
+            "an unknown name keeps the selection"
+        );
     }
 }

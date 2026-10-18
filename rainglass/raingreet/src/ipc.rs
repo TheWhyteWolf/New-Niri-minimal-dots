@@ -76,7 +76,9 @@ pub fn spawn(events: EventSender<IpcEvent>) -> Ipc {
     let (tx, rx) = mpsc::channel::<IpcCmd>();
     std::thread::spawn(move || match std::env::var("GREETD_SOCK") {
         Ok(sock) => worker(rx, events, &sock),
-        Err(_) => events.emit(IpcEvent::Fatal("GREETD_SOCK not set — run under greetd".into())),
+        Err(_) => events.emit(IpcEvent::Fatal(
+            "GREETD_SOCK not set — run under greetd".into(),
+        )),
     });
     Ipc { tx }
 }
@@ -163,7 +165,9 @@ fn write(stream: &mut UnixStream, req: Request) -> Result<(), String> {
 fn cancel(stream: &mut UnixStream) -> Result<(), String> {
     write(stream, Request::CancelSession)?;
     // Ack (Success, or Error if greetd already dropped it) — ignore either.
-    Response::read_from(stream).map(|_| ()).map_err(|e| e.to_string())
+    Response::read_from(stream)
+        .map(|_| ())
+        .map_err(|e| e.to_string())
 }
 
 /// After CreateSession/PostAuth: read responses until greetd wants something
@@ -177,7 +181,10 @@ fn pump_auth(stream: &mut UnixStream, events: &impl EventSink) -> Result<(), Str
                 events.emit(IpcEvent::AuthOk);
                 return Ok(());
             }
-            Response::Error { error_type, description } => {
+            Response::Error {
+                error_type,
+                description,
+            } => {
                 let msg = match error_type {
                     ErrorType::AuthError => {
                         if description.is_empty() {
@@ -191,7 +198,10 @@ fn pump_auth(stream: &mut UnixStream, events: &impl EventSink) -> Result<(), Str
                 events.emit(IpcEvent::AuthFailed(msg));
                 return Ok(());
             }
-            Response::AuthMessage { auth_message_type, auth_message } => match auth_message_type {
+            Response::AuthMessage {
+                auth_message_type,
+                auth_message,
+            } => match auth_message_type {
                 AuthMessageType::Secret | AuthMessageType::Visible => {
                     events.emit(IpcEvent::Prompt {
                         secret: matches!(auth_message_type, AuthMessageType::Secret),
@@ -257,7 +267,8 @@ mod tests {
         name: &str,
         script: impl FnOnce(&mut UnixStream) + Send + 'static,
     ) -> (Ipc, mpsc::Receiver<IpcEvent>) {
-        let path = std::env::temp_dir().join(format!("raingreet-ipc-{name}-{}", std::process::id()));
+        let path =
+            std::env::temp_dir().join(format!("raingreet-ipc-{name}-{}", std::process::id()));
         let _ = std::fs::remove_file(&path);
         let listener = UnixListener::bind(&path).unwrap();
         std::thread::spawn(move || {
@@ -273,7 +284,8 @@ mod tests {
     }
 
     fn next(rx: &mpsc::Receiver<IpcEvent>) -> IpcEvent {
-        rx.recv_timeout(Duration::from_secs(5)).expect("worker event")
+        rx.recv_timeout(Duration::from_secs(5))
+            .expect("worker event")
     }
 
     fn read_req(conn: &mut UnixStream) -> Request {
@@ -293,9 +305,13 @@ mod tests {
     fn full_login_conversation() {
         let (ipc, rx) = harness("full", |conn| {
             // Attempt 1: wrong password.
-            assert!(matches!(read_req(conn), Request::CreateSession { username } if username == "voyd"));
+            assert!(
+                matches!(read_req(conn), Request::CreateSession { username } if username == "voyd")
+            );
             secret_prompt(conn);
-            assert!(matches!(read_req(conn), Request::PostAuthMessageResponse { response: Some(p) } if p == "wrong"));
+            assert!(
+                matches!(read_req(conn), Request::PostAuthMessageResponse { response: Some(p) } if p == "wrong")
+            );
             Response::Error {
                 error_type: ErrorType::AuthError,
                 description: String::new(),
@@ -308,31 +324,48 @@ mod tests {
             // Attempt 2: right password, with a display-only Info first.
             assert!(matches!(read_req(conn), Request::CreateSession { .. }));
             secret_prompt(conn);
-            assert!(matches!(read_req(conn), Request::PostAuthMessageResponse { response: Some(p) } if p == "ok"));
+            assert!(
+                matches!(read_req(conn), Request::PostAuthMessageResponse { response: Some(p) } if p == "ok")
+            );
             Response::AuthMessage {
                 auth_message_type: AuthMessageType::Info,
                 auth_message: "Last login: yesterday".into(),
             }
             .write_to(conn)
             .unwrap();
-            assert!(matches!(read_req(conn), Request::PostAuthMessageResponse { response: None }));
+            assert!(matches!(
+                read_req(conn),
+                Request::PostAuthMessageResponse { response: None }
+            ));
             Response::Success.write_to(conn).unwrap();
             // Session start.
-            assert!(matches!(read_req(conn), Request::StartSession { cmd, .. } if cmd == ["niri-session"]));
+            assert!(
+                matches!(read_req(conn), Request::StartSession { cmd, .. } if cmd == ["niri-session"])
+            );
             Response::Success.write_to(conn).unwrap();
         });
 
-        ipc.send(IpcCmd::CreateSession { username: "voyd".into() });
+        ipc.send(IpcCmd::CreateSession {
+            username: "voyd".into(),
+        });
         assert!(matches!(next(&rx), IpcEvent::Prompt { secret: true, .. }));
-        ipc.send(IpcCmd::PostAuth { password: Some("wrong".into()) });
+        ipc.send(IpcCmd::PostAuth {
+            password: Some("wrong".into()),
+        });
         assert!(matches!(next(&rx), IpcEvent::AuthFailed(_)));
         ipc.send(IpcCmd::Cancel);
-        ipc.send(IpcCmd::CreateSession { username: "voyd".into() });
+        ipc.send(IpcCmd::CreateSession {
+            username: "voyd".into(),
+        });
         assert!(matches!(next(&rx), IpcEvent::Prompt { secret: true, .. }));
-        ipc.send(IpcCmd::PostAuth { password: Some("ok".into()) });
+        ipc.send(IpcCmd::PostAuth {
+            password: Some("ok".into()),
+        });
         assert!(matches!(next(&rx), IpcEvent::Info(m) if m.contains("Last login")));
         assert!(matches!(next(&rx), IpcEvent::AuthOk));
-        ipc.send(IpcCmd::StartSession { cmd: vec!["niri-session".into()] });
+        ipc.send(IpcCmd::StartSession {
+            cmd: vec!["niri-session".into()],
+        });
         assert!(matches!(next(&rx), IpcEvent::SessionStarted));
     }
 
@@ -343,15 +376,22 @@ mod tests {
         let (ipc, rx) = harness("twostep", |conn| {
             assert!(matches!(read_req(conn), Request::CreateSession { .. }));
             secret_prompt(conn);
-            assert!(matches!(read_req(conn), Request::PostAuthMessageResponse { .. }));
+            assert!(matches!(
+                read_req(conn),
+                Request::PostAuthMessageResponse { .. }
+            ));
             secret_prompt(conn); // wants a second answer
             assert!(matches!(read_req(conn), Request::CancelSession));
             Response::Success.write_to(conn).unwrap();
         });
 
-        ipc.send(IpcCmd::CreateSession { username: "voyd".into() });
+        ipc.send(IpcCmd::CreateSession {
+            username: "voyd".into(),
+        });
         assert!(matches!(next(&rx), IpcEvent::Prompt { .. }));
-        ipc.send(IpcCmd::PostAuth { password: Some("pw".into()) });
+        ipc.send(IpcCmd::PostAuth {
+            password: Some("pw".into()),
+        });
         assert!(matches!(next(&rx), IpcEvent::Prompt { secret: true, .. }));
         ipc.send(IpcCmd::Cancel); // what the app does with an unexpected prompt
     }
@@ -361,7 +401,10 @@ mod tests {
         let (ipc, rx) = harness("relogin", |conn| {
             assert!(matches!(read_req(conn), Request::CreateSession { .. }));
             secret_prompt(conn);
-            assert!(matches!(read_req(conn), Request::PostAuthMessageResponse { .. }));
+            assert!(matches!(
+                read_req(conn),
+                Request::PostAuthMessageResponse { .. }
+            ));
             Response::Error {
                 error_type: ErrorType::AuthError,
                 description: "denied".into(),
@@ -375,11 +418,17 @@ mod tests {
             secret_prompt(conn);
         });
 
-        ipc.send(IpcCmd::CreateSession { username: "voyd".into() });
+        ipc.send(IpcCmd::CreateSession {
+            username: "voyd".into(),
+        });
         assert!(matches!(next(&rx), IpcEvent::Prompt { .. }));
-        ipc.send(IpcCmd::PostAuth { password: Some("pw".into()) });
+        ipc.send(IpcCmd::PostAuth {
+            password: Some("pw".into()),
+        });
         assert!(matches!(next(&rx), IpcEvent::AuthFailed(m) if m == "denied"));
-        ipc.send(IpcCmd::CreateSession { username: "voyd".into() });
+        ipc.send(IpcCmd::CreateSession {
+            username: "voyd".into(),
+        });
         assert!(matches!(next(&rx), IpcEvent::Prompt { .. }));
     }
 
@@ -390,7 +439,9 @@ mod tests {
             // Server dies mid-conversation.
             conn.shutdown(std::net::Shutdown::Both).unwrap();
         });
-        ipc.send(IpcCmd::CreateSession { username: "voyd".into() });
+        ipc.send(IpcCmd::CreateSession {
+            username: "voyd".into(),
+        });
         assert!(matches!(next(&rx), IpcEvent::Fatal(_)));
     }
 

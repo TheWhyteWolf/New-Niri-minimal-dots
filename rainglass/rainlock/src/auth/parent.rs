@@ -64,7 +64,11 @@ impl AuthProc {
             libc::close(rep_w);
         }
 
-        AuthProc { child, request_w: req_w, reply_r: rep_r }
+        AuthProc {
+            child,
+            request_w: req_w,
+            reply_r: rep_r,
+        }
     }
 
     /// The fd the event loop polls for the 1-byte auth verdict.

@@ -57,7 +57,16 @@ impl Map {
         }
         // SAFETY: a fresh PROT_READ/MAP_PRIVATE mapping of a file we opened;
         // checked for MAP_FAILED below. The fd may close once it's mapped.
-        let ptr = unsafe { libc::mmap(std::ptr::null_mut(), len, libc::PROT_READ, libc::MAP_PRIVATE, f.as_raw_fd(), 0) };
+        let ptr = unsafe {
+            libc::mmap(
+                std::ptr::null_mut(),
+                len,
+                libc::PROT_READ,
+                libc::MAP_PRIVATE,
+                f.as_raw_fd(),
+                0,
+            )
+        };
         if ptr == libc::MAP_FAILED {
             return Err(std::io::Error::last_os_error());
         }
@@ -108,13 +117,21 @@ impl Font {
         let map = Map::open(path).map_err(|e| format!("cannot read font {path}: {e}"))?;
         // SAFETY: Face::Mapped keeps the map alive for as long as the font.
         let bytes = unsafe { map.bytes() };
-        let font = FontRef::try_from_slice_and_index(bytes, index).map_err(|e| format!("cannot parse font {path}: {e}"))?;
+        let font = FontRef::try_from_slice_and_index(bytes, index)
+            .map_err(|e| format!("cannot parse font {path}: {e}"))?;
         Font::new(Face::Mapped(font, map))
     }
 
     fn new(face: Face) -> Result<Font, String> {
-        let mut f = Font { face, units_per_em: 1.0 };
-        f.units_per_em = f.f().units_per_em().filter(|u| *u > 0.0).ok_or("font has no units-per-em")?;
+        let mut f = Font {
+            face,
+            units_per_em: 1.0,
+        };
+        f.units_per_em = f
+            .f()
+            .units_per_em()
+            .filter(|u| *u > 0.0)
+            .ok_or("font has no units-per-em")?;
         Ok(f)
     }
 
@@ -146,7 +163,10 @@ impl Font {
 
     pub fn horizontal_line_metrics(&self, px: f32) -> Option<LineMetrics> {
         let k = self.k(px);
-        let (ascent, descent) = (self.f().ascent_unscaled() * k, self.f().descent_unscaled() * k);
+        let (ascent, descent) = (
+            self.f().ascent_unscaled() * k,
+            self.f().descent_unscaled() * k,
+        );
         let line_gap = self.f().line_gap_unscaled() * k;
         (ascent != 0.0 || descent != 0.0).then_some(LineMetrics {
             ascent,
@@ -175,11 +195,23 @@ impl Font {
         };
         let Some(outlined) = outlined else {
             // Whitespace and empty glyphs: an advance and nothing to draw.
-            return (Metrics { advance_width, ..Metrics::default() }, Vec::new());
+            return (
+                Metrics {
+                    advance_width,
+                    ..Metrics::default()
+                },
+                Vec::new(),
+            );
         };
         let b = outlined.px_bounds(); // whole pixels, y down from the baseline
         let (width, height) = ((b.max.x - b.min.x) as usize, (b.max.y - b.min.y) as usize);
-        let m = Metrics { xmin: b.min.x as i32, ymin: -(b.max.y as i32), width, height, advance_width };
+        let m = Metrics {
+            xmin: b.min.x as i32,
+            ymin: -(b.max.y as i32),
+            width,
+            height,
+            advance_width,
+        };
         if !draw {
             return (m, Vec::new());
         }
@@ -214,14 +246,23 @@ mod tests {
         let Some((ours, fd)) = both() else { return };
         let chars = (' '..='~').chain("─│┌┐└┘├┤┬┴┼═║╔╗╚╝━┃╭╮╯╰░▒▓█—…é".chars());
         for px in [12.0, 15.0, 22.0, 48.0] {
-            let (la, lb) = (ours.horizontal_line_metrics(px).unwrap(), fd.horizontal_line_metrics(px).unwrap());
+            let (la, lb) = (
+                ours.horizontal_line_metrics(px).unwrap(),
+                fd.horizontal_line_metrics(px).unwrap(),
+            );
             assert!((la.ascent - lb.ascent).abs() < 0.01, "ascent {la:?} {lb:?}");
-            assert!((la.descent - lb.descent).abs() < 0.01, "descent {la:?} {lb:?}");
+            assert!(
+                (la.descent - lb.descent).abs() < 0.01,
+                "descent {la:?} {lb:?}"
+            );
             assert!((la.new_line_size - lb.new_line_size).abs() < 0.01);
             for ch in chars.clone() {
                 let (ma, ca) = ours.rasterize(ch, px);
                 let (mb, cb) = fd.rasterize(ch, px);
-                assert!((ma.advance_width - mb.advance_width).abs() < 0.01, "{ch:?} advance");
+                assert!(
+                    (ma.advance_width - mb.advance_width).abs() < 0.01,
+                    "{ch:?} advance"
+                );
                 if mb.width == 0 || mb.height == 0 {
                     assert!(ca.iter().all(|&c| c == 0), "{ch:?} should be blank");
                     continue;
@@ -229,7 +270,10 @@ mod tests {
                 // Bounds may differ by a pixel at the edge (floor vs. ceil of
                 // an exact-integer bound), so compare where the ink lands
                 // rather than the boxes.
-                assert!((ma.xmin - mb.xmin).abs() <= 1 && (ma.ymin - mb.ymin).abs() <= 1, "{ch:?} {ma:?} {mb:?}");
+                assert!(
+                    (ma.xmin - mb.xmin).abs() <= 1 && (ma.ymin - mb.ymin).abs() <= 1,
+                    "{ch:?} {ma:?} {mb:?}"
+                );
                 let n = (px as usize) * 4;
                 let place = |xmin: i32, ymin: i32, w: usize, h: usize, c: &[u8]| {
                     let mut out = vec![0i32; n * n];
@@ -248,7 +292,10 @@ mod tests {
                 let ink: i32 = b.iter().sum();
                 // The two rasterizers round anti-aliased edges differently:
                 // ~6% at worst (small punctuation at 12px), never a moved stroke.
-                assert!(diff * 10 <= ink, "{ch:?} at {px}: {diff} differing coverage of {ink}");
+                assert!(
+                    diff * 10 <= ink,
+                    "{ch:?} at {px}: {diff} differing coverage of {ink}"
+                );
             }
         }
     }
@@ -269,7 +316,9 @@ mod tests {
 
     #[test]
     fn a_mapped_font_draws_exactly_what_a_read_one_does() {
-        let Ok(bytes) = std::fs::read(NERD) else { return }; // not installed (CI)
+        let Ok(bytes) = std::fs::read(NERD) else {
+            return;
+        }; // not installed (CI)
         let owned = Font::from_bytes(bytes).unwrap();
         let mapped = Font::from_path(NERD).unwrap();
         for c in ['A', 'g', '#', '█'] {

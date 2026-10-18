@@ -86,8 +86,7 @@ ebook-tools
 poppler-qt6
 gnumeric
 
-# ── Browser ────────────────────────────────────────────────────
-brave-bin
+# ── Browser (Brave is installed from the AUR in install.sh) ────
 
 # ── Development ────────────────────────────────────────────────
 neovim

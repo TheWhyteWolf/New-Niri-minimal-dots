@@ -64,7 +64,12 @@ impl SecureBuf {
             // Never let this page into a core dump even if RLIMIT_CORE were raised.
             libc::madvise(ptr as *mut libc::c_void, page, libc::MADV_DONTDUMP);
 
-            SecureBuf { ptr, page, len: 0, locked }
+            SecureBuf {
+                ptr,
+                page,
+                len: 0,
+                locked,
+            }
         }
     }
 

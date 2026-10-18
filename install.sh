@@ -39,7 +39,8 @@ echo -e "${NC}"
 # ── Install Packages ───────────────────────────────────────────
 log "Installing packages from packages.txt..."
 if [ -f "$DOTFILES_DIR/packages.txt" ]; then
-    grep -vE '^\s*(#|$)' "$DOTFILES_DIR/packages.txt" | sudo pacman -S --needed --noconfirm -
+    mapfile -t packages < <(grep -vE '^[[:space:]]*(#|$)' "$DOTFILES_DIR/packages.txt")
+    sudo pacman -S --needed --noconfirm "${packages[@]}"
 else
     warn "packages.txt not found, skipping package installation"
 fi
@@ -86,14 +87,26 @@ link_config() {
     local src="$1"
     local dest="$HOME/.config/$2"
     local name="$2"
+    local file
 
     if [ -e "$dest" ] && [ ! -L "$dest" ]; then
         warn "Backing up existing $name → $name.bak"
         mv "$dest" "$dest.bak.$(date +%s)"
     fi
 
-    ln -sfn "$src" "$dest"
-    log "Linked $name"
+    if grep -RIlq '__HOME__' "$src"; then
+        # Copy configs that need an absolute home path. Replacing tokens in a
+        # symlinked config would also edit the tracked files in this checkout.
+        [ ! -L "$dest" ] || unlink "$dest"
+        cp -a "$src" "$dest"
+        while IFS= read -r -d '' file; do
+            sed -i "s|__HOME__|$HOME|g" "$file"
+        done < <(grep -RIlZ '__HOME__' "$dest")
+        log "Installed $name with home paths"
+    else
+        ln -sfn "$src" "$dest"
+        log "Linked $name"
+    fi
 }
 
 # Link all config directories
@@ -159,11 +172,6 @@ if [ -d "$CONFIG_DIR/xdg-desktop-portal" ]; then
         log "Installed portal config: $(basename "$conf")"
     done
 fi
-
-# ── Fix Hardcoded Paths ───────────────────────────────────────
-log "Fixing hardcoded paths..."
-find "$CONFIG_DIR" -type f \( -name "*.css" -o -name "*.kdl" -o -name "*.toml" -o -name "*.ini" -o -name "*.sh" -o -name "*.jsonc" -o -name "*.json" -o -name "bookmarks" -o -name "*.conf" -o -name "layout" -o -name "flameshot.ini" -o -name "*.tres" \) \
-    -exec sed -i "s|/home/whyte|$HOME|g" {} \; 2>/dev/null || true
 
 # ── Set Fish as Default Shell ──────────────────────────────────
 if [ "$SHELL" != "/usr/bin/fish" ]; then

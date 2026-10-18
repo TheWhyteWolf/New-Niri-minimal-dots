@@ -88,14 +88,6 @@ sudo install -d -o greeter -g greeter -m 700 /var/cache/raingreet
 # tuigreet (the fallback) needs one too, for --remember.
 sudo install -d -o greeter -g greeter -m 755 /var/cache/tuigreet
 
-echo "==> Installing /etc/greetd/config.toml"
-if [[ -f /etc/greetd/config.toml && ! -f /etc/greetd/config.toml.bak ]] \
-   && ! cmp -s "$HERE/greetd/config.toml" /etc/greetd/config.toml; then
-  sudo cp /etc/greetd/config.toml /etc/greetd/config.toml.bak
-  echo "    backed up the previous config to config.toml.bak"
-fi
-sudo install -Dm644 "$HERE/greetd/config.toml" /etc/greetd/config.toml
-
 # PAM: greetd's own stack plus gnome-keyring auto-unlock, as LightDM's and SDDM's have, so
 # logging in still unlocks the login keyring. The live stack is never the
 # thing under test: stage it under a scratch name, authenticate against that,
@@ -120,7 +112,10 @@ else
   echo "    !! pamtester isn't installed, so the stack can't be verified. A broken"
   echo "       stack means no graphical login; keep a TTY (Ctrl+Alt+F3) handy."
   ask_yn "Install the UNVERIFIED PAM stack anyway?" n && install_pam=1
-  (( install_pam )) || echo "    skipped — /etc/pam.d/greetd left as it was."
+  if ! (( install_pam )); then
+    echo "!! PAM verification was declined; greetd was not configured or enabled." >&2
+    exit 1
+  fi
 fi
 if (( install_pam )); then
   if [[ -f /etc/pam.d/greetd && ! -f /etc/pam.d/greetd.bak ]] && ! cmp -s "$HERE/greetd/pam/greetd" /etc/pam.d/greetd; then
@@ -129,6 +124,14 @@ if (( install_pam )); then
   fi
   sudo install -Dm644 "$HERE/greetd/pam/greetd" /etc/pam.d/greetd
 fi
+
+echo "==> Installing /etc/greetd/config.toml"
+if [[ -f /etc/greetd/config.toml && ! -f /etc/greetd/config.toml.bak ]] \
+   && ! cmp -s "$HERE/greetd/config.toml" /etc/greetd/config.toml; then
+  sudo cp /etc/greetd/config.toml /etc/greetd/config.toml.bak
+  echo "    backed up the previous config to config.toml.bak"
+fi
+sudo install -Dm644 "$HERE/greetd/config.toml" /etc/greetd/config.toml
 
 echo "==> greetd service drop-in (memory locking + restart policy)"
 sudo install -Dm644 "$HERE/greetd/greetd.service.d/raingreet.conf" /etc/systemd/system/greetd.service.d/raingreet.conf

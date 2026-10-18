@@ -379,7 +379,12 @@ check() {
     case $st in 0) ;; 3) fails=$((fails + 1)) ;; *) fails=$((fails + 1)); echo "$id: does not load" ;; esac
   done
   # Ids must be unique across families.
-  printf '%s\n' "${INDEX[@]}" | cut -f1 | sort | uniq -d | sed 's/^/duplicate id: /'
+  local duplicates
+  duplicates=$(printf '%s\n' "${INDEX[@]}" | cut -f1 | sort | uniq -d)
+  if [[ -n $duplicates ]]; then
+    sed 's/^/duplicate id: /' <<<"$duplicates"
+    fails=$((fails + $(wc -l <<<"$duplicates")))
+  fi
   # Every template must render against a palette.
   local t src vals
   vals=$(mktemp)
@@ -390,6 +395,7 @@ check() {
   done
   rm -f "$vals"
   echo "${#INDEX[@]} palettes, $fails with warnings"
+  (( fails == 0 ))
 }
 
 index_palettes

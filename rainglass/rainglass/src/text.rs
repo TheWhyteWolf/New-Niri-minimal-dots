@@ -76,7 +76,11 @@ pub fn band(font: &Font, lines: &[Line], screen_w: usize, top: i32, gap: usize) 
     if runs.iter().all(Option::is_none) {
         return None;
     }
-    let heights: Vec<usize> = lines.iter().zip(&runs).map(|(l, r)| r.as_ref().map_or(l.px as usize, |r| r.h)).collect();
+    let heights: Vec<usize> = lines
+        .iter()
+        .zip(&runs)
+        .map(|(l, r)| r.as_ref().map_or(l.px as usize, |r| r.h))
+        .collect();
     // Room for the shadow to spread past the glyphs.
     let pad = (lines.iter().map(|l| l.px).fold(0.0, f32::max) * 0.12).ceil() as usize + 2;
     let text_w = runs.iter().flatten().map(|r| r.w).max().unwrap_or(1);
@@ -121,7 +125,13 @@ pub fn band(font: &Font, lines: &[Line], screen_w: usize, top: i32, gap: usize) 
         }
         rgba[i * 4 + 3] = (a * 255.0).round() as u8;
     }
-    Some(Band { x: (screen_w as i32 - w as i32) / 2, y: top - pad as i32, w, h, rgba })
+    Some(Band {
+        x: (screen_w as i32 - w as i32) / 2,
+        y: top - pad as i32,
+        w,
+        h,
+        rgba,
+    })
 }
 
 /// Separable box blur on a coverage map, in place. Edges clamp.

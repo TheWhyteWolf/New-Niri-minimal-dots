@@ -22,10 +22,15 @@ use crate::cli::Cfg;
 use crate::input::{key_action, Action, AuthState, Machine};
 use crate::secure_buf::SecureBuf;
 use rainglass::{
-    buffer_px, text, Background, Band, Font, Frame, Gpu, Impact, Line, Plate, Rain, ScaleHandler, Scaling, Source,
-    SurfaceScale, Target, IMPACTS,
+    buffer_px, text, Background, Band, Font, Frame, Gpu, Impact, Line, Plate, Rain, ScaleHandler,
+    Scaling, Source, SurfaceScale, Target, IMPACTS,
 };
 
+use smithay_client_toolkit::reexports::client::{
+    globals::registry_queue_init,
+    protocol::{wl_keyboard, wl_output, wl_seat, wl_shm, wl_surface},
+    Connection, Proxy, QueueHandle,
+};
 use smithay_client_toolkit::{
     compositor::{CompositorHandler, CompositorState},
     output::{OutputHandler, OutputState},
@@ -44,14 +49,10 @@ use smithay_client_toolkit::{
         Capability, SeatHandler, SeatState,
     },
     session_lock::{
-        SessionLock, SessionLockHandler, SessionLockState, SessionLockSurface, SessionLockSurfaceConfigure,
+        SessionLock, SessionLockHandler, SessionLockState, SessionLockSurface,
+        SessionLockSurfaceConfigure,
     },
     shm::{slot::SlotPool, Shm, ShmHandler},
-};
-use smithay_client_toolkit::reexports::client::{
-    globals::registry_queue_init,
-    protocol::{wl_keyboard, wl_output, wl_seat, wl_shm, wl_surface},
-    Connection, Proxy, QueueHandle,
 };
 use std::time::{Duration, Instant};
 use zeroize::Zeroize;
@@ -114,7 +115,12 @@ fn watchdog_backoff(wait: Duration) -> Duration {
 }
 
 impl LockOutput {
-    fn new(output: wl_output::WlOutput, surface: SessionLockSurface, scale: SurfaceScale, int_scale: i32) -> LockOutput {
+    fn new(
+        output: wl_output::WlOutput,
+        surface: SessionLockSurface,
+        scale: SurfaceScale,
+        int_scale: i32,
+    ) -> LockOutput {
         LockOutput {
             plate: None,
             target: None,
@@ -147,7 +153,10 @@ impl LockOutput {
     /// logical size times the integer scale.
     fn buffer_size(&self) -> (u32, u32) {
         if self.scale.fractional() {
-            (buffer_px(self.width, self.scale120), buffer_px(self.height, self.scale120))
+            (
+                buffer_px(self.width, self.scale120),
+                buffer_px(self.height, self.scale120),
+            )
         } else {
             let s = (self.scale120 / 120).max(1);
             (self.width * s, self.height * s)
@@ -188,7 +197,10 @@ struct Content {
 
 impl Content {
     fn key(&self) -> String {
-        format!("{}|{}|{}|{:?}", self.clock, self.date, self.status, self.status_rgb)
+        format!(
+            "{}|{}|{}|{:?}",
+            self.clock, self.date, self.status, self.status_rgb
+        )
     }
 }
 
@@ -290,7 +302,11 @@ pub fn run(cfg: Cfg, auth: AuthProc) -> i32 {
             None
         }
     };
-    let rain = gpu.as_ref().and_then(|g| Rain::new(g).map_err(|e| eprintln!("rainlock: rain shader: {e}")).ok());
+    let rain = gpu.as_ref().and_then(|g| {
+        Rain::new(g)
+            .map_err(|e| eprintln!("rainlock: rain shader: {e}"))
+            .ok()
+    });
     let gpu = if rain.is_some() { gpu } else { None };
 
     let seed = std::time::SystemTime::now()
@@ -364,11 +380,13 @@ pub fn run(cfg: Cfg, auth: AuthProc) -> i32 {
     // (a few hundred ms for a large photo).
     if let Some(path) = app.cfg.image.clone() {
         let (tx, rx) = channel::channel::<Source>();
-        std::thread::spawn(move || match rainglass::load_source(&path, SOURCE_MAX.0, SOURCE_MAX.1) {
-            Ok(src) => {
-                let _ = tx.send(src);
+        std::thread::spawn(move || {
+            match rainglass::load_source(&path, SOURCE_MAX.0, SOURCE_MAX.1) {
+                Ok(src) => {
+                    let _ = tx.send(src);
+                }
+                Err(e) => eprintln!("rainlock: wallpaper {e}; showing a plain colour"),
             }
-            Err(e) => eprintln!("rainlock: wallpaper {e}; showing a plain colour"),
         });
         app.loop_handle
             .insert_source(rx, |event, _, app: &mut App| {
@@ -383,7 +401,9 @@ pub fn run(cfg: Cfg, auth: AuthProc) -> i32 {
     // Poll the auth reply fd.
     let reply_fd = app.auth.reply_fd();
     let source = smithay_client_toolkit::reexports::calloop::generic::Generic::new(
-        unsafe { std::os::unix::io::BorrowedFd::borrow_raw(reply_fd) }.try_clone_to_owned().unwrap(),
+        unsafe { std::os::unix::io::BorrowedFd::borrow_raw(reply_fd) }
+            .try_clone_to_owned()
+            .unwrap(),
         smithay_client_toolkit::reexports::calloop::Interest::READ,
         smithay_client_toolkit::reexports::calloop::Mode::Level,
     );
@@ -393,7 +413,11 @@ pub fn run(cfg: Cfg, auth: AuthProc) -> i32 {
             // If the auth child died, its reply pipe is at permanent EOF —
             // a level-triggered source would then spin at 100% CPU. Remove it.
             let alive = app.on_auth_reply();
-            Ok(if alive { PostAction::Continue } else { PostAction::Remove })
+            Ok(if alive {
+                PostAction::Continue
+            } else {
+                PostAction::Remove
+            })
         })
         .expect("insert auth reply source");
 
@@ -422,10 +446,15 @@ pub fn run(cfg: Cfg, auth: AuthProc) -> i32 {
         })
         .expect("insert frame timer");
 
-    WaylandSource::new(conn, event_queue).insert(app.loop_handle.clone()).expect("insert wayland source");
+    WaylandSource::new(conn, event_queue)
+        .insert(app.loop_handle.clone())
+        .expect("insert wayland source");
 
     while !app.exit {
-        if event_loop.dispatch(Duration::from_millis(100), &mut app).is_err() {
+        if event_loop
+            .dispatch(Duration::from_millis(100), &mut app)
+            .is_err()
+        {
             break;
         }
     }
@@ -449,7 +478,11 @@ extern "C" fn on_sigusr1(_sig: libc::c_int) {
 
 fn install_sigusr1(handle: &LoopHandle<'static, App>) {
     let read_fd = unsafe {
-        if libc::pipe2(std::ptr::addr_of_mut!(SIGUSR1_PIPE) as *mut i32, libc::O_CLOEXEC | libc::O_NONBLOCK) != 0 {
+        if libc::pipe2(
+            std::ptr::addr_of_mut!(SIGUSR1_PIPE) as *mut i32,
+            libc::O_CLOEXEC | libc::O_NONBLOCK,
+        ) != 0
+        {
             eprintln!("rainlock: warning: SIGUSR1 pipe failed; graceful unlock disabled");
             return;
         }
@@ -468,7 +501,9 @@ fn install_sigusr1(handle: &LoopHandle<'static, App>) {
         .insert_source(source, move |_, _, app: &mut App| {
             // Drain the self-pipe so the level-triggered source quiesces.
             let mut buf = [0u8; 8];
-            while unsafe { libc::read(read_fd, buf.as_mut_ptr() as *mut libc::c_void, buf.len()) } > 0 {}
+            while unsafe { libc::read(read_fd, buf.as_mut_ptr() as *mut libc::c_void, buf.len()) }
+                > 0
+            {}
             app.begin_unlock(0); // scripted graceful-unlock escape hatch
             Ok(smithay_client_toolkit::reexports::calloop::PostAction::Continue)
         })
@@ -490,7 +525,9 @@ fn clock_hhmm() -> String {
 /// Local date "SUN 18 OCT".
 fn clock_date() -> String {
     const DAYS: [&str; 7] = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
-    const MONTHS: [&str; 12] = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+    const MONTHS: [&str; 12] = [
+        "JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC",
+    ];
     unsafe {
         let now = libc::time(std::ptr::null_mut());
         let mut tm: libc::tm = std::mem::zeroed();
@@ -509,24 +546,52 @@ fn band_for(font: &Font, c: &Content, cfg: &Cfg, bw: u32, bh: u32, logical_h: u3
     let s = bh as f32 / logical_h.max(1) as f32;
     let clock = cfg.clock_px * s;
     let lines = [
-        Line { text: c.clock.clone(), px: clock, rgb: cfg.text, alpha: 0.95 },
-        Line { text: c.date.clone(), px: clock * 0.25, rgb: cfg.text, alpha: 0.8 },
-        Line { text: c.status.clone(), px: clock * 0.19, rgb: c.status_rgb, alpha: 0.95 },
+        Line {
+            text: c.clock.clone(),
+            px: clock,
+            rgb: cfg.text,
+            alpha: 0.95,
+        },
+        Line {
+            text: c.date.clone(),
+            px: clock * 0.25,
+            rgb: cfg.text,
+            alpha: 0.8,
+        },
+        Line {
+            text: c.status.clone(),
+            px: clock * 0.19,
+            rgb: c.status_rgb,
+            alpha: 0.95,
+        },
     ];
-    text::band(font, &lines, bw as usize, (bh as f32 * 0.3) as i32, (clock * 0.12) as usize)
+    text::band(
+        font,
+        &lines,
+        bw as usize,
+        (bh as f32 * 0.3) as i32,
+        (clock * 0.12) as usize,
+    )
 }
 
 impl App {
     fn add_output(&mut self, lock: &SessionLock, output: wl_output::WlOutput) {
-        let int_scale = self.output_state.info(&output).map(|i| i.scale_factor).unwrap_or(1);
+        let int_scale = self
+            .output_state
+            .info(&output)
+            .map(|i| i.scale_factor)
+            .unwrap_or(1);
         let surface = self.compositor.create_surface(&self.qh);
         let scale = self.scaling.attach(&surface, &self.qh);
         let ls = lock.create_lock_surface(surface, &output, &self.qh);
-        self.outputs.push(LockOutput::new(output, ls, scale, int_scale));
+        self.outputs
+            .push(LockOutput::new(output, ls, scale, int_scale));
     }
 
     fn output_index(&self, surface: &wl_surface::WlSurface) -> Option<usize> {
-        self.outputs.iter().position(|o| o.surface.wl_surface() == surface)
+        self.outputs
+            .iter()
+            .position(|o| o.surface.wl_surface() == surface)
     }
 
     fn reset_output(&mut self, idx: usize) {
@@ -554,7 +619,12 @@ impl App {
 
     fn splash(&mut self) {
         let (x, y) = (0.08 + 0.84 * self.rand(), 0.08 + 0.84 * self.rand());
-        self.impacts[self.next_impact] = Impact { x, y, landed: self.rain_t as f32, wiped: -1.0 };
+        self.impacts[self.next_impact] = Impact {
+            x,
+            y,
+            landed: self.rain_t as f32,
+            wiped: -1.0,
+        };
         self.next_impact = (self.next_impact + 1) % IMPACTS;
         self.dirty = true;
     }
@@ -572,7 +642,11 @@ impl App {
 
     fn wipe_all(&mut self) {
         let now = self.rain_t as f32;
-        for i in self.impacts.iter_mut().filter(|i| i.landed >= 0.0 && i.wiped < 0.0) {
+        for i in self
+            .impacts
+            .iter_mut()
+            .filter(|i| i.landed >= 0.0 && i.wiped < 0.0)
+        {
             i.wiped = now;
         }
         self.dirty = true;
@@ -587,7 +661,10 @@ impl App {
         let (status, status_rgb) = if self.unlock_at.is_some() {
             (String::new(), self.cfg.text)
         } else if self.auth_dead {
-            ("authentication is broken: use the recovery key".into(), self.cfg.urgent)
+            (
+                "authentication is broken: use the recovery key".into(),
+                self.cfg.urgent,
+            )
         } else if self.machine.auth == AuthState::Validating {
             ("checking…".into(), self.cfg.text)
         } else if let Some(msg) = &self.status_msg {
@@ -599,7 +676,12 @@ impl App {
         } else {
             (String::new(), self.cfg.text)
         };
-        Content { clock: clock_hhmm(), date: clock_date(), status, status_rgb }
+        Content {
+            clock: clock_hhmm(),
+            date: clock_date(),
+            status,
+            status_rgb,
+        }
     }
 
     fn glass(&self) -> Frame {
@@ -614,7 +696,12 @@ impl App {
             let p = at.elapsed().as_secs_f32() / WRONG_FLASH.as_secs_f32();
             if p < 1.0 {
                 let u = self.cfg.urgent;
-                f.tint = [u[0] as f32 / 255.0, u[1] as f32 / 255.0, u[2] as f32 / 255.0, 0.3 * (1.0 - p) * (1.0 - p)];
+                f.tint = [
+                    u[0] as f32 / 255.0,
+                    u[1] as f32 / 255.0,
+                    u[2] as f32 / 255.0,
+                    0.3 * (1.0 - p) * (1.0 - p),
+                ];
             }
         }
         if let Some(at) = self.unlock_at {
@@ -635,7 +722,11 @@ impl App {
         let dt = now.duration_since(self.last_tick).as_secs_f64().min(0.25);
         self.last_tick = now;
         // The rain all but stops while PAM decides, and eases back after.
-        let target = if self.machine.auth == AuthState::Validating { 0.15 } else { 1.0 };
+        let target = if self.machine.auth == AuthState::Validating {
+            0.15
+        } else {
+            1.0
+        };
         self.speed += (target - self.speed) * (dt * 4.0).min(1.0);
         if !self.cfg.still {
             self.rain_t += dt * self.speed;
@@ -653,13 +744,17 @@ impl App {
             if self.outputs[i].frame_pending {
                 // Frame-callback watchdog: see FRAME_WATCHDOG.
                 let wait = self.outputs[i].watchdog_wait;
-                let stuck = self.outputs[i].frame_pending_since.is_some_and(|since| since.elapsed() >= wait);
+                let stuck = self.outputs[i]
+                    .frame_pending_since
+                    .is_some_and(|since| since.elapsed() >= wait);
                 if !stuck {
                     continue;
                 }
                 if !self.outputs[i].watchdog_tripped {
                     self.outputs[i].watchdog_tripped = true;
-                    eprintln!("rainlock: frame callback lost on output {i} (DPMS/hotplug?) — repainting");
+                    eprintln!(
+                        "rainlock: frame callback lost on output {i} (DPMS/hotplug?) — repainting"
+                    );
                 }
                 self.outputs[i].watchdog_wait = watchdog_backoff(wait);
                 self.outputs[i].frame_pending = false;
@@ -686,7 +781,10 @@ impl App {
             self.paint_cpu(idx, content);
         }
         if let Some(t0) = t0 {
-            eprintln!("rainlock: frame {:.2}ms", t0.elapsed().as_secs_f64() * 1000.0);
+            eprintln!(
+                "rainlock: frame {:.2}ms",
+                t0.elapsed().as_secs_f64() * 1000.0
+            );
         }
     }
 
@@ -694,13 +792,19 @@ impl App {
     /// (it is then marked for the CPU path).
     fn paint_gpu(&mut self, idx: usize, content: &Content) -> bool {
         let frame = self.glass();
-        let (Some(gpu), Some(rain)) = (self.gpu.as_ref(), self.rain.as_ref()) else { return false };
+        let (Some(gpu), Some(rain)) = (self.gpu.as_ref(), self.rain.as_ref()) else {
+            return false;
+        };
         let o = &mut self.outputs[idx];
         let (bw, bh) = o.buffer_size();
 
         if o.target.is_none() {
             o.prepare_surface();
-            match gpu.target(o.surface.wl_surface().id().as_ptr().cast(), bw as i32, bh as i32) {
+            match gpu.target(
+                o.surface.wl_surface().id().as_ptr().cast(),
+                bw as i32,
+                bh as i32,
+            ) {
                 Ok(t) => o.target = Some(t),
                 Err(e) => {
                     eprintln!("rainlock: output {idx}: {e}; drawing it on the CPU");
@@ -743,7 +847,10 @@ impl App {
         }
         let key = format!("{}@{bw}x{bh}", content.key());
         if o.text_key != key {
-            let band = self.font.as_ref().and_then(|f| band_for(f, content, &self.cfg, bw, bh, o.height));
+            let band = self
+                .font
+                .as_ref()
+                .and_then(|f| band_for(f, content, &self.cfg, bw, bh, o.height));
             if let Err(e) = o.plate.as_mut().unwrap().set_text(gpu, band.as_ref()) {
                 eprintln!("rainlock: text: {e}");
             }
@@ -787,11 +894,21 @@ impl App {
                 }
             }
         }
-        let band = self.font.as_ref().and_then(|f| band_for(f, content, &self.cfg, bw, bh, o.height));
+        let band = self
+            .font
+            .as_ref()
+            .and_then(|f| band_for(f, content, &self.cfg, bw, bh, o.height));
         let pool = o.pool.as_mut().unwrap();
         match pool.create_buffer(bw as i32, bh as i32, stride, wl_shm::Format::Xrgb8888) {
             Ok((buffer, canvas)) => {
-                rainglass::still::paint(canvas, bw as usize, bh as usize, o.cpu_bg.as_ref().unwrap(), band.as_ref(), self.cfg.dim);
+                rainglass::still::paint(
+                    canvas,
+                    bw as usize,
+                    bh as usize,
+                    o.cpu_bg.as_ref().unwrap(),
+                    band.as_ref(),
+                    self.cfg.dim,
+                );
                 o.prepare_surface();
                 let surface = o.surface.wl_surface();
                 surface.frame(&self.qh, surface.clone());
@@ -817,7 +934,9 @@ impl App {
             if !(o.frame_pending && o.watchdog_tripped) {
                 return frame;
             }
-            let waited = o.frame_pending_since.map_or(Duration::ZERO, |s| s.elapsed());
+            let waited = o
+                .frame_pending_since
+                .map_or(Duration::ZERO, |s| s.elapsed());
             let due = o.watchdog_wait.saturating_sub(waited);
             soonest = Some(soonest.map_or(due, |s: Duration| s.min(due)));
         }
@@ -929,7 +1048,9 @@ impl App {
                 // recover with the recovery bind or a TTY.
                 self.machine.auth = AuthState::Idle;
                 self.auth_dead = true;
-                eprintln!("rainlock: auth child died — session stays locked; use the recovery bind");
+                eprintln!(
+                    "rainlock: auth child died — session stays locked; use the recovery bind"
+                );
                 false
             }
         }
@@ -993,10 +1114,13 @@ impl App {
             return;
         }
         self.unlock_at = Some(Instant::now());
-        let _ = self.loop_handle.insert_source(Timer::from_duration(UNLOCK_WIPE), |_, _, app: &mut App| {
-            app.begin_unlock(0);
-            TimeoutAction::Drop
-        });
+        let _ = self.loop_handle.insert_source(
+            Timer::from_duration(UNLOCK_WIPE),
+            |_, _, app: &mut App| {
+                app.begin_unlock(0);
+                TimeoutAction::Drop
+            },
+        );
     }
 
     fn begin_unlock(&mut self, code: i32) {
@@ -1057,9 +1181,14 @@ impl SessionLockHandler for App {
         _serial: u32,
     ) {
         let (w, h) = configure.new_size;
-        let Some(idx) = self.output_index(surface.wl_surface()) else { return };
+        let Some(idx) = self.output_index(surface.wl_surface()) else {
+            return;
+        };
         let resized = self.outputs[idx].width != w || self.outputs[idx].height != h;
-        eprintln!("rainlock: lock surface configured {w}x{h}{}", if resized { " (resized)" } else { "" });
+        eprintln!(
+            "rainlock: lock surface configured {w}x{h}{}",
+            if resized { " (resized)" } else { "" }
+        );
         if resized {
             self.reset_output(idx);
         }
@@ -1078,7 +1207,9 @@ impl SessionLockHandler for App {
 
 impl ScaleHandler for App {
     fn preferred_scale(&mut self, surface: &wl_surface::WlSurface, scale120: u32) {
-        let Some(idx) = self.output_index(surface) else { return };
+        let Some(idx) = self.output_index(surface) else {
+            return;
+        };
         if self.outputs[idx].scale120 != scale120 {
             self.reset_output(idx);
             self.outputs[idx].scale120 = scale120;
@@ -1088,9 +1219,17 @@ impl ScaleHandler for App {
 }
 
 impl CompositorHandler for App {
-    fn scale_factor_changed(&mut self, _: &Connection, _: &QueueHandle<Self>, surface: &wl_surface::WlSurface, factor: i32) {
+    fn scale_factor_changed(
+        &mut self,
+        _: &Connection,
+        _: &QueueHandle<Self>,
+        surface: &wl_surface::WlSurface,
+        factor: i32,
+    ) {
         // Integer scale only matters without fractional scaling.
-        let Some(idx) = self.output_index(surface) else { return };
+        let Some(idx) = self.output_index(surface) else {
+            return;
+        };
         let s120 = factor.max(1) as u32 * 120;
         if !self.outputs[idx].scale.fractional() && self.outputs[idx].scale120 != s120 {
             self.reset_output(idx);
@@ -1098,8 +1237,21 @@ impl CompositorHandler for App {
             self.dirty = true;
         }
     }
-    fn transform_changed(&mut self, _: &Connection, _: &QueueHandle<Self>, _: &wl_surface::WlSurface, _: wl_output::Transform) {}
-    fn frame(&mut self, _: &Connection, _: &QueueHandle<Self>, surface: &wl_surface::WlSurface, _: u32) {
+    fn transform_changed(
+        &mut self,
+        _: &Connection,
+        _: &QueueHandle<Self>,
+        _: &wl_surface::WlSurface,
+        _: wl_output::Transform,
+    ) {
+    }
+    fn frame(
+        &mut self,
+        _: &Connection,
+        _: &QueueHandle<Self>,
+        surface: &wl_surface::WlSurface,
+        _: u32,
+    ) {
         if let Some(idx) = self.output_index(surface) {
             let o = &mut self.outputs[idx];
             if o.watchdog_tripped {
@@ -1111,8 +1263,22 @@ impl CompositorHandler for App {
             o.frame_pending_since = None;
         }
     }
-    fn surface_enter(&mut self, _: &Connection, _: &QueueHandle<Self>, _: &wl_surface::WlSurface, _: &wl_output::WlOutput) {}
-    fn surface_leave(&mut self, _: &Connection, _: &QueueHandle<Self>, _: &wl_surface::WlSurface, _: &wl_output::WlOutput) {}
+    fn surface_enter(
+        &mut self,
+        _: &Connection,
+        _: &QueueHandle<Self>,
+        _: &wl_surface::WlSurface,
+        _: &wl_output::WlOutput,
+    ) {
+    }
+    fn surface_leave(
+        &mut self,
+        _: &Connection,
+        _: &QueueHandle<Self>,
+        _: &wl_surface::WlSurface,
+        _: &wl_output::WlOutput,
+    ) {
+    }
 }
 
 impl OutputHandler for App {
@@ -1120,12 +1286,23 @@ impl OutputHandler for App {
         &mut self.output_state
     }
 
-    fn new_output(&mut self, _conn: &Connection, _qh: &QueueHandle<Self>, output: wl_output::WlOutput) {
+    fn new_output(
+        &mut self,
+        _conn: &Connection,
+        _qh: &QueueHandle<Self>,
+        output: wl_output::WlOutput,
+    ) {
         // A monitor plugged in while locked MUST get a lock surface, or it
         // would show unlocked content. (sctk's example omits this.)
-        let Some(lock) = self.session_lock.clone() else { return };
+        let Some(lock) = self.session_lock.clone() else {
+            return;
+        };
         if !self.outputs.iter().any(|o| o.output == output) {
-            let name = self.output_state.info(&output).and_then(|i| i.name).unwrap_or_default();
+            let name = self
+                .output_state
+                .info(&output)
+                .and_then(|i| i.name)
+                .unwrap_or_default();
             eprintln!("rainlock: output {name:?} appeared — creating lock surface");
             self.add_output(&lock, output);
         }
@@ -1133,11 +1310,21 @@ impl OutputHandler for App {
 
     fn update_output(&mut self, _: &Connection, _: &QueueHandle<Self>, _: wl_output::WlOutput) {}
 
-    fn output_destroyed(&mut self, _: &Connection, _: &QueueHandle<Self>, output: wl_output::WlOutput) {
-        let Some(idx) = self.outputs.iter().position(|o| o.output == output) else { return };
+    fn output_destroyed(
+        &mut self,
+        _: &Connection,
+        _: &QueueHandle<Self>,
+        output: wl_output::WlOutput,
+    ) {
+        let Some(idx) = self.outputs.iter().position(|o| o.output == output) else {
+            return;
+        };
         self.reset_output(idx);
         self.outputs.remove(idx);
-        eprintln!("rainlock: output gone — dropped its lock surface ({} left)", self.outputs.len());
+        eprintln!(
+            "rainlock: output gone — dropped its lock surface ({} left)",
+            self.outputs.len()
+        );
     }
 }
 
@@ -1147,7 +1334,13 @@ impl SeatHandler for App {
     }
     fn new_seat(&mut self, _: &Connection, _: &QueueHandle<Self>, _: wl_seat::WlSeat) {}
 
-    fn new_capability(&mut self, _conn: &Connection, qh: &QueueHandle<Self>, seat: wl_seat::WlSeat, capability: Capability) {
+    fn new_capability(
+        &mut self,
+        _conn: &Connection,
+        qh: &QueueHandle<Self>,
+        seat: wl_seat::WlSeat,
+        capability: Capability,
+    ) {
         if capability == Capability::Keyboard && self.keyboard.is_none() {
             match self.seat_state.get_keyboard_with_repeat(
                 qh,
@@ -1165,7 +1358,13 @@ impl SeatHandler for App {
         }
     }
 
-    fn remove_capability(&mut self, _: &Connection, _: &QueueHandle<Self>, _: wl_seat::WlSeat, capability: Capability) {
+    fn remove_capability(
+        &mut self,
+        _: &Connection,
+        _: &QueueHandle<Self>,
+        _: wl_seat::WlSeat,
+        capability: Capability,
+    ) {
         if capability == Capability::Keyboard {
             if let Some(kbd) = self.keyboard.take() {
                 eprintln!("rainlock: keyboard capability removed");
@@ -1177,15 +1376,38 @@ impl SeatHandler for App {
 }
 
 impl KeyboardHandler for App {
-    fn enter(&mut self, _: &Connection, _: &QueueHandle<Self>, _: &wl_keyboard::WlKeyboard, _: &wl_surface::WlSurface, _: u32, _: &[u32], _: &[Keysym]) {
+    fn enter(
+        &mut self,
+        _: &Connection,
+        _: &QueueHandle<Self>,
+        _: &wl_keyboard::WlKeyboard,
+        _: &wl_surface::WlSurface,
+        _: u32,
+        _: &[u32],
+        _: &[Keysym],
+    ) {
         // Input-path diagnostic: if this never fires, the compositor never gave
         // the lock surface keyboard focus — the bug is upstream of us.
         eprintln!("rainlock: keyboard focus entered lock surface");
     }
-    fn leave(&mut self, _: &Connection, _: &QueueHandle<Self>, _: &wl_keyboard::WlKeyboard, _: &wl_surface::WlSurface, _: u32) {
+    fn leave(
+        &mut self,
+        _: &Connection,
+        _: &QueueHandle<Self>,
+        _: &wl_keyboard::WlKeyboard,
+        _: &wl_surface::WlSurface,
+        _: u32,
+    ) {
         eprintln!("rainlock: keyboard focus left lock surface");
     }
-    fn press_key(&mut self, _: &Connection, _: &QueueHandle<Self>, _: &wl_keyboard::WlKeyboard, _: u32, event: KeyEvent) {
+    fn press_key(
+        &mut self,
+        _: &Connection,
+        _: &QueueHandle<Self>,
+        _: &wl_keyboard::WlKeyboard,
+        _: u32,
+        event: KeyEvent,
+    ) {
         if !self.saw_first_key {
             self.saw_first_key = true;
             // Deliberately content-free: proves delivery without logging keys.
@@ -1193,13 +1415,37 @@ impl KeyboardHandler for App {
         }
         self.on_key(event);
     }
-    fn repeat_key(&mut self, _: &Connection, _: &QueueHandle<Self>, _: &wl_keyboard::WlKeyboard, _: u32, _: KeyEvent) {
+    fn repeat_key(
+        &mut self,
+        _: &Connection,
+        _: &QueueHandle<Self>,
+        _: &wl_keyboard::WlKeyboard,
+        _: u32,
+        _: KeyEvent,
+    ) {
         // Compositor-driven (wl_keyboard v10) repeats — no-op. Repeat is driven
         // by the get_keyboard_with_repeat calloop callback, so handling this
         // too would double-type on v10 compositors.
     }
-    fn release_key(&mut self, _: &Connection, _: &QueueHandle<Self>, _: &wl_keyboard::WlKeyboard, _: u32, _: KeyEvent) {}
-    fn update_modifiers(&mut self, _: &Connection, _: &QueueHandle<Self>, _: &wl_keyboard::WlKeyboard, _: u32, modifiers: Modifiers, _: RawModifiers, _: u32) {
+    fn release_key(
+        &mut self,
+        _: &Connection,
+        _: &QueueHandle<Self>,
+        _: &wl_keyboard::WlKeyboard,
+        _: u32,
+        _: KeyEvent,
+    ) {
+    }
+    fn update_modifiers(
+        &mut self,
+        _: &Connection,
+        _: &QueueHandle<Self>,
+        _: &wl_keyboard::WlKeyboard,
+        _: u32,
+        modifiers: Modifiers,
+        _: RawModifiers,
+        _: u32,
+    ) {
         self.mods = modifiers;
         if self.caps_lock != modifiers.caps_lock {
             self.caps_lock = modifiers.caps_lock;
@@ -1254,8 +1500,21 @@ mod tests {
 
     #[test]
     fn content_key_changes_with_what_is_shown() {
-        let a = Content { clock: "21:47".into(), date: "SUN 18 OCT".into(), status: String::new(), status_rgb: [1, 2, 3] };
-        let b = Content { status: "wrong password".into(), ..Content { clock: a.clock.clone(), date: a.date.clone(), status: String::new(), status_rgb: a.status_rgb } };
+        let a = Content {
+            clock: "21:47".into(),
+            date: "SUN 18 OCT".into(),
+            status: String::new(),
+            status_rgb: [1, 2, 3],
+        };
+        let b = Content {
+            status: "wrong password".into(),
+            ..Content {
+                clock: a.clock.clone(),
+                date: a.date.clone(),
+                status: String::new(),
+                status_rgb: a.status_rgb,
+            }
+        };
         assert_ne!(a.key(), b.key());
     }
 }

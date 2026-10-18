@@ -69,10 +69,16 @@ mod tests {
 
     #[test]
     fn keysym_table() {
-        assert_eq!(key_action(Keysym::Return, Some("\r"), false), Action::Submit);
+        assert_eq!(
+            key_action(Keysym::Return, Some("\r"), false),
+            Action::Submit
+        );
         assert_eq!(key_action(Keysym::KP_Enter, None, false), Action::Submit);
         assert_eq!(key_action(Keysym::m, Some("m"), true), Action::Submit);
-        assert_eq!(key_action(Keysym::m, Some("m"), false), Action::Append("m".into()));
+        assert_eq!(
+            key_action(Keysym::m, Some("m"), false),
+            Action::Append("m".into())
+        );
         assert_eq!(key_action(Keysym::BackSpace, None, false), Action::PopChar);
         assert_eq!(key_action(Keysym::BackSpace, None, true), Action::ClearAll);
         assert_eq!(key_action(Keysym::Delete, None, true), Action::ClearAll);
@@ -84,7 +90,10 @@ mod tests {
         assert_eq!(key_action(Keysym::C, Some("C"), true), Action::ClearAll);
         assert_eq!(key_action(Keysym::M, Some("M"), true), Action::Submit);
         assert_eq!(key_action(Keysym::Shift_L, None, false), Action::Neutral);
-        assert_eq!(key_action(Keysym::a, Some("a"), false), Action::Append("a".into()));
+        assert_eq!(
+            key_action(Keysym::a, Some("a"), false),
+            Action::Append("a".into())
+        );
         // Ctrl+letter combos that aren't bound: swallowed, not typed.
         assert_eq!(key_action(Keysym::a, Some("a"), true), Action::Ignore);
         assert_eq!(key_action(Keysym::F5, None, false), Action::Ignore);
