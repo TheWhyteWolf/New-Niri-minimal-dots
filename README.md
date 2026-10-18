@@ -26,9 +26,9 @@
 |----------|------------|-----|
 | ![Launcher](Screenshots/launcher.png) | ![Workspaces](Screenshots/workspaces.png) | ![Zed](Screenshots/zed.png) |
 
-| Neovim | Power Menu | Wallpaper Picker (Fuzz-Wall) |
-|--------|------------|------------------|
-| ![Neovim](Screenshots/neovim.png) | ![Power Menu](Screenshots/powermenu.png) | ![Wallpapers](Screenshots/wallpaperpicker.png) |
+| Neovim | Power Menu |
+|--------|------------|
+| ![Neovim](Screenshots/neovim.png) | ![Power Menu](Screenshots/powermenu.png) |
 
 | btop | Cava |
 |------|------|
@@ -134,7 +134,7 @@ That's it. The installer handles:
 | `Mod + Z` | Open Zed editor |
 | `Mod + P` | Power menu (Fuzzel-based) |
 | `Mod + Shift + T` | Colour theme picker (Fuzzel-based) |
-| `Mod + Shift + W` | Wallpaper picker (Fuzzel-based) |
+| `Mod + Shift + W` | Wallpaper thumbnail grid (Rofi) |
 | `Print` | Screenshot (Flameshot GUI) |
 
 ### Window Management
@@ -197,7 +197,7 @@ That's it. The installer handles:
 | Script | Description | Dependencies |
 |--------|-------------|--------------|
 | `powermenu` | Fuzzel-based power menu (Shutdown/Reboot/Suspend/Logout/Lock) | fuzzel, systemctl, niri-lock |
-| `set-wallpaper` | Interactive wallpaper picker using Fuzzel | fuzzel, swaybg |
+| `set-wallpaper` | Searchable wallpaper thumbnail grid | rofi, imagemagick, swaybg |
 | `clipboard-history` | Browse and select from clipboard history | cliphist, fuzzel, wl-copy |
 | `notification-history` | Browse notification history | fuzzel, makoctl |
 | `mako-history` | View Mako notification log | fuzzel |
@@ -430,7 +430,7 @@ your own.
 
 ```bash
 # Place images in ~/Pictures/wallpapers/
-# Then use the picker:
+# Then open the thumbnail grid with Mod + Shift + W, or run:
 ~/.local/bin/set-wallpaper
 ```
 

@@ -1,65 +1,112 @@
-#!/bin/sh
-# fuzzel-wallpaper - A fuzzel-based wallpaper picker
-# Supports: swaybg, hyprpaper, feh, nitrogen, xwallpaper, swww
+#!/usr/bin/env bash
+# Wallpaper picker: searchable thumbnail grid with Rofi.
+
+set -euo pipefail
 
 WALLDIR="${FUZZEL_WALLPAPER_DIR:-$HOME/Pictures/wallpapers}"
+CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/wallpaper-picker"
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}"
 
-# Detect wallpaper setter
-detect_setter() {
-    if [ -n "$WAYLAND_DISPLAY" ]; then
-        for cmd in swww swaybg hyprpaper xwallpaper; do
-            command -v "$cmd" >/dev/null 2>&1 && echo "$cmd" && return
-        done
+THEME='
+* { background-color: #101923ee; text-color: #dce9ee; border-color: #63c7d9; font: "DejaVu Sans 12"; }
+window { width: 850px; padding: 18px; border: 2px; border-radius: 14px; }
+mainbox { spacing: 14px; }
+inputbar { padding: 10px; border-radius: 8px; background-color: #22323dcc; }
+listview { columns: 4; lines: 3; spacing: 10px; fixed-height: false; scrollbar: false; }
+element { children: [element-icon]; padding: 6px; border: 2px; border-radius: 8px; }
+element selected { background-color: #294c59; border-color: #63c7d9; }
+element-icon { size: 175px; }
+'
+
+notify_error() {
+    printf 'set-wallpaper: %s\n' "$1" >&2
+    command -v notify-send >/dev/null 2>&1 && notify-send 'Wallpaper picker' "$1" || true
+}
+
+if [[ ! -d "$WALLDIR" ]]; then
+    notify_error "Wallpaper directory not found: $WALLDIR"
+    exit 1
+fi
+for tool in rofi magick sha256sum; do
+    if ! command -v "$tool" >/dev/null 2>&1; then
+        notify_error "Missing $tool; install rofi and imagemagick"
+        exit 1
     fi
-    # X11 fallback
-    for cmd in feh nitrogen xwallpaper; do
-        command -v "$cmd" >/dev/null 2>&1 && echo "$cmd" && return
-    done
-    echo "none"
-}
+done
+mkdir -p "$CACHE_DIR"
 
-set_wallpaper() {
-    WALL="$1"
-    SETTER="$2"
-
-    case "$SETTER" in
-        swaybg)
-            pkill swaybg 2>/dev/null
-            swaybg -i "$WALL" -m fill &
-            ;;
-        swww)
-            swww img "$WALL" --transition-type fade ;;
-        hyprpaper)
-            hyprctl hyprpaper wallpaper ",$WALL" ;;
-        feh)
-            feh --bg-fill "$WALL" ;;
-        nitrogen)
-            nitrogen --set-zoom-fill "$WALL" ;;
-        xwallpaper)
-            xwallpaper --zoom "$WALL" ;;
-        *)
-            notify-send "fuzzel-wallpaper" "No supported wallpaper setter found!" 2>/dev/null
-            exit 1
-            ;;
+declare -a wallpapers=() thumbnails=()
+while IFS= read -r -d '' wall; do
+    case "${wall,,}" in
+        *.jpg|*.jpeg|*.png|*.webp|*.bmp|*.gif|*.avif) ;;
+        *) continue ;;
     esac
-}
+    # Rofi uses newlines and control bytes as row separators and metadata.
+    [[ "$wall" != *$'\n'* && "$wall" != *$'\x1f'* ]] || continue
+    hash=$(printf '%s' "$wall" | sha256sum)
+    thumbnail="$CACHE_DIR/${hash%% *}.png"
+    if [[ ! -s "$thumbnail" || "$wall" -nt "$thumbnail" ]]; then
+        temporary="$thumbnail.tmp.$$"
+        if magick "$wall" -auto-orient -thumbnail '175x175^' -gravity center \
+            -extent 175x175 -strip "png:$temporary"; then
+            mv -f -- "$temporary" "$thumbnail"
+        else
+            rm -f -- "$temporary"
+            continue
+        fi
+    fi
+    wallpapers+=("$wall")
+    thumbnails+=("$thumbnail")
+done < <(find "$WALLDIR" -maxdepth 1 \( -type f -o -type l \) -print0 | sort -z)
 
-# Checks
-if [ ! -d "$WALLDIR" ]; then
-    notify-send "fuzzel-wallpaper" "Wallpaper directory not found: $WALLDIR" 2>/dev/null
-    echo "Error: Wallpaper directory not found: $WALLDIR" >&2
+if (( ${#wallpapers[@]} == 0 )); then
+    notify_error "No supported wallpapers found in $WALLDIR"
     exit 1
 fi
 
-command -v fuzzel >/dev/null 2>&1 || { echo "fuzzel not found"; exit 1; }
+detect_setter() {
+    if [[ -n "${WAYLAND_DISPLAY:-}" ]]; then
+        for tool in swww swaybg hyprpaper xwallpaper; do
+            if command -v "$tool" >/dev/null 2>&1; then printf '%s\n' "$tool"; return; fi
+        done
+    fi
+    for tool in feh nitrogen xwallpaper; do
+        if command -v "$tool" >/dev/null 2>&1; then printf '%s\n' "$tool"; return; fi
+    done
+    notify_error 'No supported wallpaper setter found'
+    exit 1
+}
 
-SETTER=$(detect_setter)
+setter=$(detect_setter)
+
+set_wallpaper() {
+    local wall=$1
+    case "$setter" in
+        swaybg)
+            pkill -x swaybg 2>/dev/null || true
+            swaybg -i "$wall" -m fill >/dev/null 2>&1 &
+            ;;
+        swww) swww img "$wall" --transition-type fade ;;
+        hyprpaper) hyprctl hyprpaper wallpaper ",$wall" ;;
+        feh) feh --bg-fill "$wall" ;;
+        nitrogen) nitrogen --set-zoom-fill "$wall" ;;
+        xwallpaper) xwallpaper --zoom "$wall" ;;
+    esac
+    mkdir -p "$STATE_DIR"
+    printf '%s\n' "$wall" > "$STATE_DIR/niri-wallpaper"
+}
 
 while true; do
-    WALL=$(ls "$WALLDIR" | fuzzel --dmenu --prompt "Wallpaper (ESC to exit) > ")
-    [ -z "$WALL" ] && exit 0
-    set_wallpaper "$WALLDIR/$WALL" "$SETTER"
-    # The lock screen (rainlock) shows whatever the desktop shows.
-    state="${XDG_STATE_HOME:-$HOME/.local/state}"
-    mkdir -p "$state" && printf '%s\n' "$WALLDIR/$WALL" > "$state/niri-wallpaper"
+    if selection=$(
+        for i in "${!wallpapers[@]}"; do
+            printf '%s\0icon\x1f%s\n' "${wallpapers[i]##*/}" "${thumbnails[i]}"
+        done | rofi -no-config -dmenu -show-icons -no-custom -i -format i \
+            -p 'Search wallpapers' -theme-str "$THEME"
+    ); then
+        [[ "$selection" =~ ^[0-9]+$ ]] || exit 0
+        (( selection < ${#wallpapers[@]} )) || exit 0
+        set_wallpaper "${wallpapers[selection]}"
+    else
+        exit 0
+    fi
 done

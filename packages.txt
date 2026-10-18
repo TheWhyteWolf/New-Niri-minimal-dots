@@ -6,6 +6,7 @@
 # ── Window Manager & Core ──────────────────────────────────────
 waybar
 fuzzel
+rofi
 mako
 swaybg
 polkit-gnome
