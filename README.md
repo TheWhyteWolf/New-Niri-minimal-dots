@@ -134,6 +134,7 @@ That's it. The installer handles:
 | `Mod + Z` | Open Zed editor |
 | `Mod + P` | Power menu (Fuzzel-based) |
 | `Mod + Shift + T` | Colour theme picker (Fuzzel-based) |
+| `Mod + Shift + W` | Wallpaper picker (Fuzzel-based) |
 | `Print` | Screenshot (Flameshot GUI) |
 
 ### Window Management

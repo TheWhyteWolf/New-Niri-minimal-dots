@@ -28,6 +28,7 @@ binds {
     Alt+Return { spawn "kitty";}
     Mod+Shift+C hotkey-overlay-title="Clipboard history" { spawn-sh "~/.local/bin/clipboard-history"; }
     Mod+Shift+T hotkey-overlay-title="Colour theme" { spawn-sh "~/.local/bin/theme"; }
+    Mod+Shift+W hotkey-overlay-title="Wallpaper picker" { spawn-sh "~/.local/bin/set-wallpaper"; }
     // Straight to the lock script, not via loginctl: that needs swayidle running.
     Mod+Alt+Escape hotkey-overlay-title="Lock screen" { spawn-sh "~/.config/niri-lock/lock.sh"; }
     // Recovery: if the locker ever wedges (niri shows its red "locker died"
