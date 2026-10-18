@@ -34,6 +34,20 @@
 |------|------|
 | ![btop](Screenshots/btopbtm.png) | ![Cava](Screenshots/cava.png) |
 
+### New additions (concept previews)
+
+These illustrative mockups show the intended look of the new features. They are
+not captures from a running session; appearance may differ with your wallpaper
+and colour palette.
+
+| Rainlock | Raingreet |
+|----------|-----------|
+| ![Concept preview of the rainy lock screen](Screenshots/rainlock-concept.webp) | ![Concept preview of the rainy login screen](Screenshots/raingreet-concept.webp) |
+
+| Colour theme picker | Dropdown terminal (top-half snap) |
+|---------------------|-----------------------------------|
+| ![Concept preview of the colour theme picker](Screenshots/theme-picker-concept.webp) | ![Concept preview of the dropdown terminal](Screenshots/dropdown-terminal-concept.webp) |
+
 ---
 
 ## What's Included
