@@ -49,6 +49,18 @@ vec3 hash32(vec2 p) {
     return fract((p3.xxy + p3.yzz) * p3.zyx);
 }
 
+// Fine, stationary condensation between the larger drops. It is evaluated
+// after the running drops so their clear trails can wipe it away as well.
+float condensation(vec2 p) {
+    vec2 q = p * 110.0;
+    vec2 id = floor(q);
+    vec3 h = hash32(id + vec2(29.0, 11.0));
+    if (h.z > u_density * 0.18) return 0.0;
+    vec2 d = fract(q) - 0.5 - (h.xy - 0.5) * 0.45;
+    float r = mix(0.10, 0.19, h.x);
+    return 1.0 - smoothstep(r * 0.5, r, length(d));
+}
+
 // What the glass does at one pixel, summed over every layer.
 struct Glass {
     vec2 off;    // where to look instead (p units)
@@ -183,7 +195,8 @@ void main() {
     vec2 off = vec2(g.off.x / aspect, g.off.y);
     float drop = clamp(g.drop, 0.0, 1.0);
     float clear = clamp(max(drop, g.clear), 0.0, 1.0);
-    float fog = clamp(u_fog * (1.0 - clear), 0.0, 1.0);
+    float micro = condensation(p) * (1.0 - smoothstep(0.15, 0.75, clear)) * clamp(u_fog, 0.0, 1.0);
+    float fog = clamp(u_fog * (1.0 - clear) - micro * 0.22, 0.0, 1.0);
 
     vec3 sharp = texture2D(u_sharp, uv + off).rgb;
     vec3 frost = texture2D(u_frost, uv + off * 0.25).rgb;
@@ -191,6 +204,7 @@ void main() {
     float lum = dot(frost, vec3(0.299, 0.587, 0.114));
     vec3 glass = mix(frost, vec3(lum), 0.2) * 0.9 + 0.035;
     vec3 col = mix(sharp, glass, fog);
+    col += micro * 0.035;
 
     // Water shading: darker towards each drop's rim, a highlight from the top left.
     float slope = clamp(length(g.n), 0.0, 1.0);
